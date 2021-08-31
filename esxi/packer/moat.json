@@ -1,0 +1,141 @@
+{
+  "variables": {
+    "consul_version": "1.10.2",
+    "consul_template_version": "0.27.0",
+    "vault_version": "1.8.2",
+    "authorized_keys": "{{ vault `/packer/data/ssh` `authorized_keys`}}",
+    "esxi_hostname": "esxi.local",
+    "esxi_password": "{{ vault `/packer/data/esxi` `esxi_password`}}",
+    "esxi_username": "{{ vault `/packer/data/esxi` `esxi_username`}}",
+    "ssh_password": "{{ vault `/packer/data/ubuntu` `moat`}}",
+    "vm-cpu-num": "1",
+    "vm-disk-size": "20480",
+    "vm-mem-size": "1024",
+    "vm-name": "Moat-{{ timestamp }}"
+  },
+  "builders": [
+    {
+      "CPUs": "{{user `vm-cpu-num`}}",
+      "boot_command": [
+        "<enter><wait><f6><wait><esc><wait>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs>",
+        "/install/vmlinuz",
+        " initrd=/install/initrd.gz",
+        " priority=critical",
+        " locale=en_US",
+        " file=/media/moat_preseed.cfg",
+        "<enter>"
+      ],
+      "disk_size": "{{user `vm-disk-size`}}",
+      "disk_type_id": "thin",
+      "floppy_files": [
+        "./moat_preseed.cfg"
+      ],
+      "guest_os_type": "ubuntu-64",
+      "iso_checksum": "sha256:8c5fc24894394035402f66f3824beb7234b757dd2b5531379cb310cedfdf0996",
+      "iso_url": "https://cdimage.ubuntu.com/releases/18.04/release/ubuntu-18.04.5-server-amd64.iso",
+      "keep_registered": true,
+      "memory": "{{user `vm-mem-size`}}",
+      "network_adapter_type": "vmxnet3",
+      "network_name": "VM Network",
+      "remote_datastore": "datastore1",
+      "remote_host": "{{user `esxi_hostname`}}",
+      "remote_password": "{{user `esxi_password`}}",
+      "remote_port": 22,
+      "remote_type": "esx5",
+      "remote_username": "{{user `esxi_username`}}",
+      "shutdown_command": "sudo -S shutdown -P now",
+      "skip_export": true,
+      "ssh_password": "{{user `ssh_password`}}",
+      "ssh_timeout": "10m",
+      "ssh_username": "ubuntu",
+      "type": "vmware-iso",
+      "vm_name": "{{user `vm-name`}}",
+      "vmx_data": {
+        "virtualhw.version": "17"
+      },
+      "vnc_over_websocket": "true"
+    }
+  ],
+  "provisioners": [
+    {
+      "expect_disconnect": true,
+      "inline": [
+        "touch /home/ubuntu/.hushlogin",
+        "mkdir -p /home/ubuntu/.ssh",
+        "echo '{{user `authorized_keys`}}' > /home/ubuntu/.ssh/authorized_keys",
+        "chmod 600 /home/ubuntu/.ssh/authorized_keys",
+        "chown -R ubuntu /home/ubuntu/.ssh",
+        "sudo sed -i -e 's/#PasswordAuthentication yes/PasswordAuthentication no/g' /etc/ssh/sshd_config",
+        "sudo service ssh restart"
+      ],
+      "type": "shell"
+    },
+    {
+      "destination": "/home/ubuntu",
+      "source": "scripts/",
+      "type": "file"
+    },
+    {
+      "destination": "/home/ubuntu",
+      "source": "moat_files/",
+      "type": "file"
+    },
+    {
+      "inline": [
+        "sudo mv /home/ubuntu/root.crt /usr/local/share/ca-certificates/",
+        "sudo update-ca-certificates"
+      ],
+      "type": "shell"
+    },
+    {
+      "inline": [
+        "chmod +x /home/ubuntu/*.sh"
+      ],
+      "type": "shell"
+    },
+    {
+      "inline": [
+        "curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -",
+        "sudo apt-add-repository \"deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main\"",
+        "sudo apt-get update",
+        "sudo apt-get upgrade -y",
+        "sudo apt-get install -y vault={{user `vault_version`}} consul={{user `consul_version`}}",
+        "sudo apt-get autoremove -y",
+        "sudo -H -u ubuntu vault -autocomplete-install",
+        "sudo -H -u ubuntu consul -autocomplete-install"
+      ],
+      "type": "shell"
+    },
+    {
+      "inline": [
+        "curl -O https://releases.hashicorp.com/consul-template/{{user `consul_template_version`}}/consul-template_{{user `consul_template_version`}}_linux_amd64.zip",
+        "unzip consul-template_{{user `consul_template_version`}}_linux_amd64.zip",
+        "sudo chmod a+x consul-template",
+        "sudo mv consul-template /usr/bin/consul-template",
+        "sudo mv /home/ubuntu/consul-template.service /usr/lib/systemd/system/consul-template.service",
+        "sudo systemctl daemon-reload",
+        "sudo mkdir -p /etc/consul-template.d",
+        "sudo mv /home/ubuntu/consul-template.hcl /etc/consul-template.d/.",
+        "sudo chown -R consul:consul /etc/consul-template.d"
+      ],
+      "type": "shell"
+    },
+    {
+      "inline": [
+        "sudo mv /home/ubuntu/nginx.json /etc/consul.d/.",
+        "sudo chown -R consul:consul /etc/consul.d/.",
+        "sudo mv /home/ubuntu/nginx/* /etc/nginx/."
+      ],
+      "type": "shell"
+    }
+  ]
+}

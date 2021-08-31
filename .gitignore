@@ -1,0 +1,8 @@
+.terraform
+*.tfstate*
+remote_backend.tf*
+*.tfvars
+.DS_Store
+*.pem
+.vagrant
+*.hclic

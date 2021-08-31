@@ -1,0 +1,129 @@
+# Home Lab
+
+If you want to skip ahead, please review [Repository Structure](#repository-structure) and [Preparatory Steps](#preparatory-steps).
+
+## Background
+This repository documents my home lab configuration. The original goal of this project was to provide a home server platform where I could run essential services in my home network 24/7/365, as well as provide space for learning and experimentation. I originally began with a [Raspberry Pi](https://www.raspberrypi.org) to run the DNS based ad blocker [Pi-hole](https://pi-hole.net) but I quickly outgrew that hardware. I settled on the [Intel NUC](https://www.intel.com/content/www/us/en/products/details/nuc.html) as the appropriate for my needs combination of performance/resources/power efficiency. The software is [VMware ESXi](https://www.vmware.com/products/esxi-and-esx.html) as a hypervisor, and [HashiCorp Nomad](https://www.nomadproject.io) as an orchestrator. 
+
+## Design Goals
+My design goals were to use infrastructure as code and immutable infrastructure to address challenges I've experienced in previous lab environments. What I found in my past experience is I would spend significant effort over days/weeks/months to get an environment set up and configured just right, but then lacking a complete record of the steps necessary to recreate it I would be terrified of messing it up or losing it. 
+
+Often I would make some change to the environment and forget what I did or why I did it. Or I would upgrade a software package and later discover it messed something up. Without versioned infrastructure as code it was difficult to recover from an issue, especially if I didn't recall exactly what I had changed. If the problem was serious enough I would resort to rebuilding the system from scratch. Using versioned infrastructure makes it easier to recover from a failure, and easier to perform upgrades safely. 
+
+## Architecture
+The high level architecture is VMs on ESXi running on an [Intel NUC](https://www.intel.com/content/www/us/en/products/details/nuc.html).
+
+![](./architecture.svg)
+
+- Castle nodes are Nomad/Consul/Vault servers
+- NAS provides an NFS volume for persistent storage
+- Moat provides an L4 UDP proxy to be used as a primary LDNS
+
+### Hypervisor
+I selected ESXi as the hypervisor due to its widespread popularity and compatibility. I originally began with ESXi 6.7 but am now on 7.0 Update 1.
+
+- [VMware Compatibility Guide](https://www.vmware.com/resources/compatibility/search.php?deviceCategory=software&details=1&operatingSystems=272&page=1&display_interval=20&sortColumn=Partner&sortOrder=Asc&testConfig=16)
+- [How to obtain an ESXi 7.0 free license](https://www.virten.net/2020/04/free-esxi-7-0-how-to-download-and-get-license-keys/) 
+
+### Software
+Each of the three Castle nodes run Nomad, Consul, and Vault, to form highly available clusters of each application.
+
+Nomad serves as a general purpose orchestrator that can handle containers, VMs, Java, scripts, and more. I selected Nomad for its simplicity and ease of use. Nomad supports a server/client mode for development where machines can function as both a server and a client, and this is what I use. Each machine operates as a Nomad server and a Nomad client.
+
+Consul serves as the service catalog. It integrates natively with Nomad to register and deregister services as they are deployed or terminated, provide health checks, and enable secure service-to-service communication. Consul also supports a mode where machines can function as a server and a client, and this is what I use. Each machine operates as a Consul server and a Consul agent.
+
+Vault provides secrets management. It integrates natively with Nomad to provide secrets to application workloads. Although Vault 1.4+ can perform its own data storage, I found it simpler in this environment to use Consul as the storage backend for Vault since the nodes will automatically discover each other through the Consul storage backend. Each machine operates as a Vault server.
+
+### Persistent Storage
+Some of the applications that will be run in this environment require persistent storage. The datastore needs to be consistent and available to services that are scheduled on any of the Castle nodes. The approach I chose was to create a storage VM. The VM has a ZFS volume that is mirrored across two physical volumes on the ESXi host. This provides some degree of redundancy in the event of a single disk failure. Additionally, the persistent data could be backed up to a cloud storage solution such as Backblaze or S3 or wherever. The ZFS volume is exposed as an NFS share and mounted on each Castle node.
+
+#### Futures
+When looking to improve this architecture I will be checking out Florian Apolloner's [NFS CSI Plugin](https://gitlab.com/rocketduck/csi-plugin-nfs) project. I just learned about this and it looks interesting.
+
+### Backups
+There are Consul and Nomad snapshot agents running that periodically save Consul and Nomad cluster snapshots. Additionally with Vault Enterprise, one could establish a Disaster Recovery cluster on another machine that would contain a complete copy of the Vault cluster data and configuration.
+
+### DNS
+Little bit of a chicken and egg here. The original requirement is providing a primary LDNS for home network. That will be pi-hole running on Nomad is the LDNS.
+But the nodes in the cluster need DNS resolution themselves in order to be up and running and stable.
+So I am running unbound on each host is so they have bulletproof stable DNS since the whole infrastructure depends on it.
+Pi-hole is run as a Nomad service but on dynamic ports.
+Moat serves as a DNS1 VIP. It provides a stable IP port 53 for clients to address. NGINX plus Consul template is used to keep it up to date. 
+
+Docs: https://learn.hashicorp.com/tutorials/consul/dns-forwarding
+
+#### Futures
+- When looking to improve this I'd like to eliminate the need for a separate proxy.
+- Watching [#7430](https://github.com/traefik/traefik/issues/7430) for Traefik UDP fix
+
+### IPAM
+In a cloud environment we would have capabilities like cloud auto join to enable the nodes to discover each other and form a cluster. Since we don't exactly have this capability available in the home lab I resort to static IP addresses. Each node has a designated IP address so they will be able to communicate with each other and form a cluster. This is mainly applicable to Consul, because absent static addresses the Nomad and Vault servers could locate each other with Consul. However the Consul servers would already have to be in place and the simplest way to do that in this lab is with static addresses.
+
+### Upgrades
+In a cloud environment we would have primitives like auto scaling groups that faciliate dynamic infrastructure and make immutable upgrades effortless. Since we don't exactly have this capability available in the home lab I use a blue green approach for upgrades. We designate three blue nodes and three green nodes. We begin by provisioning the "blue" nodes. When it comes time for an upgrade, we update our base images and provision the "green" nodes. Once we've verified the green nodes are healthy, we drain the blue nodes and destroy them, leaving just the new green nodes. If something goes wrong or there is a problem with the upgrade we still have our original blue nodes. We can remove the green nodes and try again. Repeat.
+
+### Certificates
+If you would like to avoid repeated certificate warnings in your browser and elsewhere, you can build your own Certificate Authority and add the root certificate to the trust store on your machines. Once you’ve done that Vault can issue trusted certificates for other hosts or applications, like your ESXi host for example. Later when configuring Traefik you can provide it with a wildcard certificate from Vault or configure the Traefik's Let’s Encrypt provider to obtain a publicly trusted certificate.
+
+*Note*: If you do not add your root certificate to the system trust store you’ll need to add VAULT_SKIP_VERIFY to the Nomad server
+
+### Ingress
+The idea with Traefik is now easy ingress - automatic TLS, plus connect sidecar means automatic TLS for everything with a couple lines of config in the Nomad job.
+
+## Hardware
+I looked for low power consumption systems with a large number of logical cores. I selected the 2018 [Intel NUC8i7BEH](https://www.intel.com/content/www/us/en/products/sku/126140/intel-nuc-kit-nuc8i7beh/specifications.html), which provides 8 logical cores and pretty good performance relative to its cost and power consumption. It supports up to 64 GB RAM and provides two internal drive bays, as well as support for external storage via a Thunderbolt 3 interface. The basic elements of the lab do not require all that much storage; 500 GB would be sufficient. However I would recommend at least 1 TB over two physical volumes to provide adequate room for troubleshooting, recovery, experimentation, and growth. 
+
+Here's a terrific blog post that provides an overview comparison of the various Intel NUC models:
+- [Which Intel NUC should I buy for VMware ESXi? (August 2020)](https://www.virten.net/2020/08/which-intel-nuc-should-i-buy-for-vmware-esxi-august-2020/)
+
+## Repository Structure
+This repo is composed of two parts:
+- ESXi Home Lab infrastructure
+- Nomad Jobs
+
+The high level steps are:
+
+0. Install and configure ESXi.
+1. Use the [Packer template](./esxi/packer) to create a base image on your ESXi host. See [Packer README](./esxi/packer/README.md) for specific steps.
+2. Use the [Terraform code](./esxi/terraform) to provision server VMs on your ESXi host using the base image as a template. See [Terraform README](./esxi/terraform/README.md) for specific steps.
+3. Use the [Nomad job files](./nomad-jobs) to run services on cluster. See [README](./nomad-jobs/README.md) for specifics.
+
+### Preparation Steps
+I recommend starting a Vault instance before continuing on with these steps. It will be easier to use these configs as they expect the secrets to be in Vault. Once you have a provisional Vault server running, you can build your CA, create an AppRole, and store passwords needed by the Packer templates. Later, when your real cluster is ready you can migrate the provisional Vault data to the real one. 
+
+In my environment at that stage I configured the real cluster as a DR secondary, allowing Vault to replicate all secrets and configuration to it, and then designated it the primary. I then configured the original provisional cluster as a DR secondary. Alternatively you could migrate using `vault operator migrate`, referencing the [Storage Migration tutorial](https://learn.hashicorp.com/tutorials/vault/raft-migration) Learn guide but going in the opposite direction.
+
+There is a simple Vagrantfile that you can use to spin up a single node Vault server [here](./vagrant/Vagrantfile).
+
+1. Search and replace all IP addresses to match your private network address range.
+2. If you do not have enterprise licenses search and replace all packages to oss.
+3. Configure your desired [seal stanza](https://www.vaultproject.io/docs/configuration/seal) in the [Vault configuration](./esxi/packer/castle_files/vault.hcl) file. This stanza is optional, and in the case of the master key, Vault will use the Shamir algorithm to cryptographically split the master key if this is not configured. I happen to use GCP KMS, which require GCP credentials be placed on each Vault server. There are a variety of ways to accomplish this. I have them retrieved from Vault and rendered onto the file system by Vault Agent in [bootstrap.sh](./esxi/packer/scripts/bootstrap.sh), which is run as a provisioner (i know :-D) in the Terraform code.
+4. Generate an AppRole to be used in the build process by following the [AppRole Pull Authentication](https://learn.hashicorp.com/tutorials/vault/approle) Learn guide. Save the RoleID as `role_id` in the [castle_files](./esxi/packer/castle_files) and [moat_files](./esxi/packer/moat_files) directories. The SecretID will be provided as the [secret_id](./esxi/terraform/variables.tf#L26) terraform variable. This role, which I called `bootstrap`, should have a policy assigned similar to the below (substitute your path names, and add your particular cloud credential if using a cloud auto unseal):
+```
+path "pki/intermediate/issue/hashidemos-io" {
+  capabilities = [ "update" ]
+}
+
+path "auth/token/create" {
+  capabilities = ["create", "read", "update", "list"]
+}
+```
+5. Follow the [Build Your Own Certificate Authority](https://learn.hashicorp.com/tutorials/vault/pki-engine) guide to generate your root and intermediate CAs. Save the root certificate as `root.crt` in the [castle_files](./esxi/packer/castle_files) and [moat_files](./esxi/packer/moat_files) directories. Update the `cert.tpl` and `key.tpl` Vault Agent templates in the [castle_files](./esxi/packer/castle_files) and [moat_files](./esxi/packer/moat_files) directories with your host/domain/role names. These templates are for the provisioner script that runs in Terraform. It runs Vault Agent once to authenticate to Vault and issue certificates for the Vault servers to use.
+
+#### Futures
+When looking to improve this architecture I will be looking at using wrapped SecretIDs and applying a CIDR binding per https://learn.hashicorp.com/tutorials/vault/approle-best-practices?in=vault/auth-methods#approle-response-wrapping.
+
+Better to use the Vault provider instead of a bootstrap script?
+
+## Enterprise Features in use
+Nomad
+- Dynamic Application Sizing
+- Automated Backups
+- Automated Upgrades
+
+Consul
+- Automated Backups
+- Automated Upgrades
+
+Terraform Cloud
+- Terraform Cloud Agent

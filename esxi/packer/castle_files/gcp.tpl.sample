@@ -1,0 +1,2 @@
+{{- /* gcp.tpl */ -}}
+{{ with secret "packer/data/gcp" }}{{ .Data.data.GOOGLE_CREDENTIALS }}{{ end }}

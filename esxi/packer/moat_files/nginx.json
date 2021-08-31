@@ -1,0 +1,13 @@
+{
+    "service": {
+        "name": "nginx",
+        "port": 53,
+        "check": {
+            "id": "dns",
+            "name": "DNS TCP on port 53",
+            "tcp": "localhost:53",
+            "interval": "10s",
+            "timeout": "1s"
+        }
+    }
+}

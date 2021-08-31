@@ -1,0 +1,218 @@
+{
+  "variables": {
+    "cni_version": "0.9.1",
+    "consul_version": "1.10.2+ent",
+    "containerd_version": "0.8",
+    "nomad_version": "1.1.4+ent",
+    "vault_version": "1.8.2+ent",
+    "authorized_keys": "{{ vault `/packer/data/ssh` `authorized_keys`}}",
+    "esxi_hostname": "esxi.local",
+    "esxi_password": "{{ vault `/packer/data/esxi` `esxi_password`}}",
+    "esxi_username": "{{ vault `/packer/data/esxi` `esxi_username`}}",
+    "ssh_password": "{{ vault `/packer/data/ubuntu` `castle`}}",
+    "consul_license": "{{ vault `/packer/data/licenses` `consul_ent`}}",
+    "nomad_license": "{{ vault `/packer/data/licenses` `nomad_ent`}}",
+    "vault_license": "{{ vault `/packer/data/licenses` `vault_ent`}}",
+    "nomad_vault_token": "{{ vault `/packer/data/nomad` `vault_token`}}",
+    "vm-cpu-num": "2",
+    "vm-disk-size": "163840",
+    "vm-mem-size": "12288",
+    "vm-name": "Castle-{{ timestamp }}"
+  },
+  "builders": [
+    {
+      "CPUs": "{{user `vm-cpu-num`}}",
+      "boot_command": [
+        "<enter><wait><f6><wait><esc><wait>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
+        "<bs><bs><bs>",
+        "/install/vmlinuz",
+        " initrd=/install/initrd.gz",
+        " priority=critical",
+        " locale=en_US",
+        " file=/media/castle_preseed.cfg",
+        "<enter>"
+      ],
+      "disk_size": "{{user `vm-disk-size`}}",
+      "disk_type_id": "thin",
+      "floppy_files": [
+        "./castle_preseed.cfg"
+      ],
+      "guest_os_type": "ubuntu-64",
+      "iso_checksum": "sha256:8c5fc24894394035402f66f3824beb7234b757dd2b5531379cb310cedfdf0996",
+      "iso_url": "https://cdimage.ubuntu.com/releases/18.04/release/ubuntu-18.04.5-server-amd64.iso",
+      "keep_registered": true,
+      "memory": "{{user `vm-mem-size`}}",
+      "network_adapter_type": "vmxnet3",
+      "network_name": "VM Network",
+      "remote_datastore": "datastore1",
+      "remote_host": "{{user `esxi_hostname`}}",
+      "remote_password": "{{user `esxi_password`}}",
+      "remote_port": 22,
+      "remote_type": "esx5",
+      "remote_username": "{{user `esxi_username`}}",
+      "shutdown_command": "sudo -S shutdown -P now",
+      "skip_export": true,
+      "ssh_password": "{{user `ssh_password`}}",
+      "ssh_timeout": "10m",
+      "ssh_username": "ubuntu",
+      "type": "vmware-iso",
+      "vm_name": "{{user `vm-name`}}",
+      "vmx_data": {
+        "virtualhw.version": "17"
+      },
+      "vnc_over_websocket": "true"
+    }
+  ],
+  "provisioners": [
+    {
+      "expect_disconnect": true,
+      "inline": [
+        "touch /home/ubuntu/.hushlogin",
+        "mkdir -p /home/ubuntu/.ssh",
+        "echo '{{user `authorized_keys`}}' > /home/ubuntu/.ssh/authorized_keys",
+        "chmod 600 /home/ubuntu/.ssh/authorized_keys",
+        "chown -R ubuntu /home/ubuntu/.ssh",
+        "sudo sed -i -e 's/#PasswordAuthentication yes/PasswordAuthentication no/g' /etc/ssh/sshd_config",
+        "sudo service ssh restart"
+      ],
+      "type": "shell"
+    },
+    {
+      "destination": "/home/ubuntu",
+      "source": "scripts/",
+      "type": "file"
+    },
+    {
+      "destination": "/home/ubuntu",
+      "source": "castle_files/",
+      "type": "file"
+    },
+    {
+      "inline": [
+        "sudo mv /home/ubuntu/unbound.conf /etc/unbound/unbound.conf",
+        "sudo systemctl restart unbound"
+      ],
+      "type": "shell"
+    },
+    {
+      "inline": [
+        "sudo mv /home/ubuntu/root.crt /usr/local/share/ca-certificates/",
+        "sudo update-ca-certificates"
+      ],
+      "type": "shell"
+    },
+    {
+      "inline": [
+        "chmod +x /home/ubuntu/*.sh"
+      ],
+      "type": "shell"
+    },
+    {
+      "inline": [
+        "sudo mkdir /mnt/data && sudo chmod 777 /mnt/data",
+        "echo '192.168.0.55:/data    /mnt/data   nfs auto,nofail,noatime,nolock,intr,tcp,actimeo=1800 0 0' | sudo tee -a /etc/fstab",
+        "sudo mount -a",
+        "df -h"
+      ],
+      "type": "shell"
+    },
+    {
+      "inline": [
+        "curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -",
+        "sudo apt-add-repository \"deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main\"",
+        "sudo apt-get update",
+        "sudo apt-get upgrade -y",
+        "sudo apt-get install -y nomad-enterprise={{user `nomad_version`}} vault-enterprise={{user `vault_version`}} consul-enterprise={{user `consul_version`}}",
+        "sudo apt-get autoremove -y",
+        "sudo -H -u ubuntu nomad -autocomplete-install",
+        "sudo -H -u ubuntu consul -autocomplete-install",
+        "sudo -H -u ubuntu vault -autocomplete-install"
+      ],
+      "type": "shell"
+    },
+    {
+      "inline": [
+        "sudo mkdir -p /opt/cni/bin/",
+        "curl -LO https://github.com/containernetworking/plugins/releases/download/v{{user `cni_version`}}/cni-plugins-linux-amd64-v{{user `cni_version`}}.tgz",
+        "sudo tar -xzf cni-plugins-linux-amd64-v{{user `cni_version`}}.tgz -C /opt/cni/bin/"
+      ],
+      "type": "shell"
+    },
+    {
+      "inline": [
+        "sudo mkdir -p /opt/nomad/plugins",
+        "curl -OL https://github.com/Roblox/nomad-driver-containerd/releases/download/v{{user `containerd_version`}}/containerd-driver",
+        "sudo mv containerd-driver /opt/nomad/plugins/."
+      ],
+      "type": "shell"
+    },
+    {
+      "inline": [
+        "chmod +x /home/ubuntu/VMware-ovftool-4.4.1-16812187-lin.x86_64.bundle",
+        "sudo /home/ubuntu/VMware-ovftool-4.4.1-16812187-lin.x86_64.bundle --eulas-agreed --required --console"
+      ],
+      "type": "shell"
+    },
+    {
+      "inline": [
+        "sudo mv /home/ubuntu/vault.service /usr/lib/systemd/system/vault.service",
+        "sudo systemctl daemon-reload",
+        "sudo touch /var/log/vault_audit.log",
+        "sudo chown vault:vault /var/log/vault_audit.log"
+      ],
+      "type": "shell"
+    },
+    {
+      "inline": [
+        "sudo mv /home/ubuntu/nomad.service /usr/lib/systemd/system/nomad.service",
+        "sudo systemctl daemon-reload",
+        "sudo chown -R nomad:nomad /opt/nomad",
+        "sudo chmod -R 700 /opt/nomad"
+      ],
+      "type": "shell"
+    },
+    {
+      "type": "shell",
+      "environment_vars": [
+        "consul_license={{user `consul_license`}}",
+        "nomad_license={{user `nomad_license`}}",
+        "vault_license={{user `vault_license`}}",
+        "nomad_vault_token={{user `nomad_vault_token`}}"
+      ],
+      "inline": [
+        "touch /home/ubuntu/consul.hclic",
+        "echo ${consul_license} >> /home/ubuntu/consul.hclic",
+        "sudo mv /home/ubuntu/consul.hclic /etc/consul.d/license.hclic",
+        "touch /home/ubuntu/nomad.hclic",
+        "echo ${nomad_license} >> /home/ubuntu/nomad.hclic",
+        "sudo mv /home/ubuntu/nomad.hclic /etc/nomad.d/license.hclic",
+        "touch /home/ubuntu/nomad.env",
+        "echo VAULT_TOKEN=${nomad_vault_token} >> /home/ubuntu/nomad.env",
+        "sudo mv /home/ubuntu/nomad.env /etc/nomad.d/nomad.env",
+        "touch /home/ubuntu/vault.hclic",
+        "echo ${vault_license} >> /home/ubuntu/vault.hclic",
+        "sudo mv /home/ubuntu/vault.hclic /etc/vault.d/license.hclic",
+        "sudo chown vault:vault /etc/vault.d/license.hclic",
+        "sudo chmod 640 /etc/vault.d/license.hclic"
+      ]
+    },
+    {
+      "inline": [
+        "sudo mv /home/ubuntu/consul.hcl /etc/consul.d/.",
+        "sudo chown -R consul:consul /etc/consul.d",
+        "sudo mv /home/ubuntu/nomad.hcl /etc/nomad.d/.",
+        "sudo chown -R nomad:nomad /etc/nomad.d",
+        "sudo chmod 640 /etc/consul.d/* /etc/nomad.d/*"
+      ],
+      "type": "shell"
+    }
+  ]
+}

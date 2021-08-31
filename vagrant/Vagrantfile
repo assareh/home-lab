@@ -1,0 +1,75 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+$script = <<SCRIPT
+apt-get update && apt-get install curl jq -y
+
+# add HashiCorp GPG key and repo
+curl -fsSL https://apt.releases.hashicorp.com/gpg | apt-key add -
+ apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+apt-get update
+
+echo "Installing Vault..."
+apt-get install vault-enterprise=1.8.2+ent -y
+
+sudo mv /home/vagrant/vault.hclic /etc/vault.d/vault.hclic
+
+sudo tee /etc/vault.d/vault.hcl <<EOF
+# Full configuration options can be found at https://www.vaultproject.io/docs/configuration
+
+ui = true
+
+disable_mlock = true
+
+api_addr = "https://127.0.0.1:8200"
+cluster_addr = "https://127.0.0.1:8201"
+
+license_path = "/etc/vault.d/vault.hclic"
+
+storage "raft" {
+  path = "/opt/vault/data"
+  node_id = "raft_node_1"
+}
+
+listener "tcp" {
+  address       = "0.0.0.0:8200"
+  tls_cert_file = "/opt/vault/tls/tls.crt"
+  tls_key_file  = "/opt/vault/tls/tls.key"
+}
+EOF
+
+sudo chown -R vault:vault /etc/vault.d
+sudo chmod -R 0640 /etc/vault.d/*
+
+sudo tee -a /etc/environment <<EOF
+export VAULT_ADDR=https://127.0.0.1:8200
+export VAULT_SKIP_VERIFY=true
+EOF
+
+source /etc/environment
+
+logger "Granting mlock syscall to vault binary"
+sudo setcap cap_ipc_lock=+ep /usr/bin/vault
+
+echo "Starting Vault..."
+sudo systemctl enable vault
+sudo systemctl start vault
+sudo systemctl status vault
+SCRIPT
+
+Vagrant.configure("2") do |config|
+  # Start from this base box
+  config.vm.box = "hashicorp/bionic64"
+  
+  # Set the host name
+  config.vm.hostname = "vault"
+
+  # Transfer the license file
+  config.vm.provision "file", source: "vault.hclic", destination: "vault.hclic"
+
+  # Run the bootstrap script
+  config.vm.provision "shell", inline: $script
+
+  # Expose the vault api and ui to the host
+  config.vm.network "forwarded_port", guest: 8200, host: 8200, auto_correct: true, host_ip: "127.0.0.1"
+end
