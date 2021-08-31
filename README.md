@@ -13,7 +13,7 @@ Often I would make some change to the environment and forget what I did or why I
 ## Architecture
 The high level architecture is VMs on ESXi running on an [Intel NUC](https://www.intel.com/content/www/us/en/products/details/nuc.html).
 
-![](./architecture.svg)
+![](./architecture.png)
 
 - Castle nodes are Nomad/Consul/Vault servers
 - NAS provides an NFS volume for persistent storage
@@ -28,27 +28,23 @@ I selected ESXi as the hypervisor due to its widespread popularity and compatibi
 ### Software
 Each of the three Castle nodes run Nomad, Consul, and Vault, to form highly available clusters of each application.
 
-Nomad serves as a general purpose orchestrator that can handle containers, VMs, Java, scripts, and more. I selected Nomad for its simplicity and ease of use. Nomad supports a server/client mode for development where machines can function as both a server and a client, and this is what I use. Each machine operates as a Nomad server and a Nomad client.
+[Nomad](https://nomadproject.io) serves as a general purpose orchestrator that can handle containers, VMs, Java, scripts, and more. I selected Nomad for its simplicity and ease of use. Nomad supports a server/client mode for development where machines can function as both a server and a client, and this is what I use. Each Castle node operates as a Nomad server and a Nomad client.
 
-Consul serves as the service catalog. It integrates natively with Nomad to register and deregister services as they are deployed or terminated, provide health checks, and enable secure service-to-service communication. Consul also supports a mode where machines can function as a server and a client, and this is what I use. Each machine operates as a Consul server and a Consul agent.
+[Consul](https://consul.io) serves as the service catalog. It integrates natively with Nomad to register and deregister services as they are deployed or terminated, provide health checks, and enable secure service-to-service communication. Each Castle node operates as a Consul server, however the server can also act as a client agent.
 
-Vault provides secrets management. It integrates natively with Nomad to provide secrets to application workloads. Although Vault 1.4+ can perform its own data storage, I found it simpler in this environment to use Consul as the storage backend for Vault since the nodes will automatically discover each other through the Consul storage backend. Each machine operates as a Vault server.
+[Vault](https://vaultproject.io) provides secrets management. It integrates natively with Nomad to provide secrets to application workloads. Although Vault 1.4+ can perform its own data storage, I found it simpler in this environment to use Consul as the storage backend for Vault since the nodes will automatically discover each other through the Consul storage backend. Each Castle node operates as a Vault server.
 
 ### Persistent Storage
-Some of the applications that will be run in this environment require persistent storage. The datastore needs to be consistent and available to services that are scheduled on any of the Castle nodes. The approach I chose was to create a storage VM. The VM has a ZFS volume that is mirrored across two physical volumes on the ESXi host. This provides some degree of redundancy in the event of a single disk failure. Additionally, the persistent data could be backed up to a cloud storage solution such as Backblaze or S3 or wherever. The ZFS volume is exposed as an NFS share and mounted on each Castle node.
+Some of the applications that will be run in this environment require persistent storage. The datastore needs to be consistent and available to services that are scheduled on any of the Castle nodes. The approach I chose was to create a storage VM that functions as a virtual Network-attached storage (NAS) device. The VM has a ZFS volume that is mirrored across two physical volumes on the ESXi host. This provides some degree of redundancy in the event of a single disk failure. Additionally, the persistent data could be backed up to a cloud storage solution such as Backblaze or S3 or wherever. The ZFS volume is exposed as an NFS share and mounted on each Castle node.
 
 #### Futures
-When looking to improve this architecture I will be checking out Florian Apolloner's [NFS CSI Plugin](https://gitlab.com/rocketduck/csi-plugin-nfs) project. I just learned about this and it looks interesting.
+- When looking to improve this architecture I will be checking out Florian Apolloner's [NFS CSI Plugin](https://gitlab.com/rocketduck/csi-plugin-nfs) project. I just learned about this and it looks interesting.
 
 ### Backups
 There are Consul and Nomad snapshot agents running that periodically save Consul and Nomad cluster snapshots. Additionally with Vault Enterprise, one could establish a Disaster Recovery cluster on another machine that would contain a complete copy of the Vault cluster data and configuration.
 
 ### DNS
-Little bit of a chicken and egg here. The original requirement is providing a primary LDNS for home network. That will be pi-hole running on Nomad is the LDNS.
-But the nodes in the cluster need DNS resolution themselves in order to be up and running and stable.
-So I am running unbound on each host is so they have bulletproof stable DNS since the whole infrastructure depends on it.
-Pi-hole is run as a Nomad service but on dynamic ports.
-Moat serves as a DNS1 VIP. It provides a stable IP port 53 for clients to address. NGINX plus Consul template is used to keep it up to date. 
+There is a little bit of chicken and egg here. One of the original requirements for this project was to provide a primary LDNS for my home network. That will be accomplished with [Pi-hole](https://pi-hole.net) running on Nomad. However the Castle nodes themselves need DNS resolution in order to reach each other and the internet. To accomplish that I am running [Unbound](https://www.nlnetlabs.nl/projects/unbound/about/) on each host so they have stable DNS resolvers. Since Unbound uses UDP 53 on each Castle node, Pi-hole is run on dynamically assigned ports. Therefore the Moat proxy instance serves as the DNS1 listener. It provides a stable IP for clients to address. NGINX and Consul Template are used to keep its configuration up to date. 
 
 Docs: https://learn.hashicorp.com/tutorials/consul/dns-forwarding
 
@@ -111,9 +107,8 @@ path "auth/token/create" {
 5. Follow the [Build Your Own Certificate Authority](https://learn.hashicorp.com/tutorials/vault/pki-engine) guide to generate your root and intermediate CAs. Save the root certificate as `root.crt` in the [castle_files](./esxi/packer/castle_files) and [moat_files](./esxi/packer/moat_files) directories. Update the `cert.tpl` and `key.tpl` Vault Agent templates in the [castle_files](./esxi/packer/castle_files) and [moat_files](./esxi/packer/moat_files) directories with your host/domain/role names. These templates are for the provisioner script that runs in Terraform. It runs Vault Agent once to authenticate to Vault and issue certificates for the Vault servers to use.
 
 #### Futures
-When looking to improve this architecture I will be looking at using wrapped SecretIDs and applying a CIDR binding per https://learn.hashicorp.com/tutorials/vault/approle-best-practices?in=vault/auth-methods#approle-response-wrapping.
-
-Better to use the Vault provider instead of a bootstrap script?
+- When looking to improve this architecture I will be looking at using wrapped SecretIDs and applying a CIDR binding per https://learn.hashicorp.com/tutorials/vault/approle-best-practices?in=vault/auth-methods#approle-response-wrapping.
+- Better to use the Vault provider instead of a bootstrap script?
 
 ## Enterprise Features in use
 Nomad
@@ -127,3 +122,6 @@ Consul
 
 Terraform Cloud
 - Terraform Cloud Agent
+
+## Links and References
+- 
