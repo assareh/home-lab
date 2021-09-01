@@ -1,5 +1,6 @@
 job "traefik" {
   datacenters = ["dc1"]
+  type        = "system"
 
   group "traefik" {
     vault {
@@ -224,8 +225,8 @@ EOF
       }
 
       resources {
-        cpu    = 157
-        memory = 256
+        cpu    = 100
+        memory = 128
       }
 
       scaling "cpu" {
