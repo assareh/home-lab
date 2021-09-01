@@ -10,7 +10,7 @@ All images are based on ubuntu-18.04.5, using the `vmware-iso` builder.
 * **Moat**: (optional) NGINX proxy (may be eventually deprecated)
 
 ## Notes
-You'll need to create the NAS first as the Castle machines depend on it. See line 121 of [castle.json](./castle.json#L121).
+You'll need to create the NAS first as the Castle machines depend on it. Line 121 of [castle.json](./castle.json#L121) is where the NFS volume is mounted.
 
 ### Password Steps
 These are steps for how to set a linux user password in the preseed file:
