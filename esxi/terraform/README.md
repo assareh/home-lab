@@ -1,4 +1,4 @@
-# ESXi Home Lab
+# ESXi Home Lab Terraform
 
 Terraform configuration to provision the Nomad/Consul/Vault servers based on the Packer VM templates. This code depends on the community provided [esxi](https://registry.terraform.io/providers/josenk/esxi/latest) Terraform provider. If you would like to provision this using Terraform Cloud, you'll need a Business tier entitlement to enable Terraform Cloud Agents (assuming your ESXi host is not reachable from the internet, and it probably shouldn't be.)
 
