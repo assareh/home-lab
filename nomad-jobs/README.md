@@ -33,13 +33,15 @@ I am using the [Let's Encrypt integration](https://doc.traefik.io/traefik/https/
 - Watching [#7430](https://github.com/traefik/traefik/issues/7430) for a UDP fix
 
 ## To do list
+* properly store traefik acme
 * add notes of why i customized pihole and homebridge images
 * document "dnsmasq.cname=true"
 * roll out consul connect now that traefik 2.5
-* add a meta or whatever to make sure that i don't accidentally add a server to this cluster without NAS and then everything fails
 * enhance service checks and https://www.nomadproject.io/docs/job-specification/check_restart
-* can send all docker logs to splunk https://docs.docker.com/config/containers/logging/configure/
-* how to properly store traefik acme
-* https://github.com/scarolan/migrate-vmware-to-nomad/blob/master/nomad-job.hcl
-* https://github.com/angrycub/nomad_example_jobs/tree/main/qemu
-* where docker volume on NAS in use should i put back the host volume declarations just to ensure it's there
+* can send docker logs to splunk https://docs.docker.com/config/containers/logging/configure/
+
+## Links and References
+Examples here:
+- https://github.com/scarolan/migrate-vmware-to-nomad/blob/master/nomad-job.hcl
+- https://github.com/angrycub/nomad_example_jobs/tree/main/qemu
+- https://github.com/jescholl/nomad

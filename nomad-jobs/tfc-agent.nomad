@@ -3,7 +3,10 @@ job "tfc-agent" {
   type        = "service"
 
   group "tfc-agent" {
-    count = 2
+    restart {
+      attempts = 100
+      delay    = "1s"
+    }
 
     vault {
       policies = ["tfc-agent"]
@@ -13,10 +16,10 @@ job "tfc-agent" {
       driver = "exec"
 
       artifact {
-        source = "https://releases.hashicorp.com/tfc-agent/0.2.1/tfc-agent_0.2.1_linux_amd64.zip"
+        source = "https://releases.hashicorp.com/tfc-agent/0.4.0/tfc-agent_0.4.0_linux_amd64.zip"
 
         options {
-          checksum = "sha256:ae3394688ff0d2102f3e2940ffbdba6b538b34a3d112a80e3d2f441d29b76b82"
+          checksum = "sha256:bb9db0edc2932b753128b61243cd772196fd8ecfc67545b7c193932bcbdaf3cc"
         }
       }
 
@@ -39,8 +42,8 @@ job "tfc-agent" {
       }
 
       resources {
-        cpu    = 2000
-        memory = 2048
+        cpu    = 250
+        memory = 1024
       }
 
       scaling "cpu" {

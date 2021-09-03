@@ -6,8 +6,12 @@ output "ip_addresses_green" {
   value = { for k, v in esxi_guest.green : k => v.ip_address }
 }
 
-output "ip_addresses_moat" {
-  value = { for k, v in esxi_guest.moat : k => v.ip_address }
+output "ip_address_moat" {
+  value = esxi_guest.moat.ip_address
+}
+
+output "ip_address_nas" {
+  value = esxi_guest.nas.ip_address
 }
 
 output "note" {

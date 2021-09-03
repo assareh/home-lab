@@ -27,7 +27,7 @@ connect {
 }
 
 node_meta {
-  build = "0.0.1"
+  build = "0.0.7"
 }
 
 ports {
