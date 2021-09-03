@@ -78,7 +78,7 @@ server {
   license_path     = "/etc/nomad.d/license.hclic"
   bootstrap_expect = 3
   raft_protocol    = 3
-  upgrade_version  = "0.0.2"
+  upgrade_version  = "0.0.0"
 }
 
 telemetry {
