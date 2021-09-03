@@ -14,7 +14,15 @@ advertise {
   serf = "{{ GetInterfaceIP `ens160` }}"
 }
 
-autopilot {}
+autopilot {
+  cleanup_dead_servers      = true
+  last_contact_threshold    = "200ms"
+  max_trailing_logs         = 250
+  server_stabilization_time = "10s"
+  enable_redundancy_zones   = false
+  disable_upgrade_migration = false
+  enable_custom_upgrades    = true
+}
 
 client {
   enabled    = true
@@ -70,6 +78,7 @@ server {
   license_path     = "/etc/nomad.d/license.hclic"
   bootstrap_expect = 3
   raft_protocol    = 3
+  upgrade_version  = "0.0.0"
 }
 
 telemetry {
@@ -81,6 +90,7 @@ telemetry {
 }
 
 vault {
-  enabled = true
-  address = "https://vault.service.consul:8200"
+  enabled          = true
+  address          = "https://vault.service.consul:8200"
+  create_from_role = "nomad-cluster"
 }

@@ -59,12 +59,15 @@ In a cloud environment we would have capabilities like cloud auto join to enable
 In a cloud environment we would have primitives like auto scaling groups that faciliate dynamic infrastructure and make immutable upgrades effortless. Since we don't exactly have this capability available in the home lab I use a blue green approach for upgrades. We designate three blue nodes and three green nodes. We begin by provisioning the "blue" nodes. When it comes time for an upgrade, we update our base images and provision the "green" nodes. Once we've verified the green nodes are healthy, we drain the blue nodes and destroy them, leaving just the new green nodes. If something goes wrong or there is a problem with the upgrade we still have our original blue nodes. We can remove the green nodes and try again. Repeat.
 
 ### Certificates
-If you would like to avoid repeated certificate warnings in your browser and elsewhere, you can build your own Certificate Authority and add the root certificate to the trust store on your machines. Once you’ve done that Vault can issue trusted certificates for other hosts or applications, like your ESXi host for example. Later when configuring Traefik you can provide it with a wildcard certificate from Vault or configure the Traefik's Let’s Encrypt provider to obtain a publicly trusted certificate.
+If you would like to avoid repeated certificate warnings in your browser and elsewhere, you can build your own certificate authority and add the root certificate to the trust store on your machines. Once you’ve done that Vault can issue trusted certificates for other hosts or applications, like your ESXi host for example. Later when configuring Traefik you can provide it with a wildcard certificate from Vault or configure the Traefik's Let’s Encrypt provider to obtain a publicly trusted certificate.
 
 *Note*: If you do not add your root certificate to the system trust store you’ll need to add VAULT_SKIP_VERIFY to the Nomad server
 
 ### Ingress
 The idea with Traefik is now easy ingress - automatic TLS, plus connect sidecar means automatic TLS for everything with a couple lines of config in the Nomad job.
+
+### Secrets / Trusted Orchestrator
+In a cloud environment we would have machine identity provided by the platform that we could directly leverage for authentication and access to secrets. Since we don't have that capability in this "on prem" lab, we can use Vault's [AppRole](https://www.vaultproject.io/docs/auth/approle) authentication method in a [Trusted orchestrator](https://learn.hashicorp.com/tutorials/vault/secure-introduction#trusted-orchestrator) model to faciliate the secure introduction of secrets to our server nodes.
 
 ## Hardware
 I looked for low power consumption systems with a large number of logical cores. I selected the 2018 [Intel NUC8i7BEH](https://www.intel.com/content/www/us/en/products/sku/126140/intel-nuc-kit-nuc8i7beh/specifications.html), which provides 8 logical cores and pretty good performance relative to its cost and power consumption. It supports up to 64 GB RAM and provides two internal drive bays, as well as support for external storage via a Thunderbolt 3 interface. The basic elements of the lab do not require all that much storage; 500 GB would be sufficient. However I would recommend at least 1 TB over two physical volumes to provide adequate room for troubleshooting, recovery, experimentation, and growth. 
@@ -91,11 +94,48 @@ In my environment at that stage I configured the real cluster as a DR secondary,
 
 There is a simple Vagrantfile that you can use to spin up a single node Vault server [here](./vagrant/Vagrantfile).
 
-1. Search and replace all IP addresses to match your private network address range.
-2. If you do not have enterprise licenses search and replace all packages to oss.
-3. Configure your desired [seal stanza](https://www.vaultproject.io/docs/configuration/seal) in the [Vault configuration](./esxi/packer/castle_files/vault.hcl) file. This stanza is optional, and in the case of the master key, Vault will use the Shamir algorithm to cryptographically split the master key if this is not configured. I happen to use GCP KMS, which require GCP credentials be placed on each Vault server. There are a variety of ways to accomplish this. I have them retrieved from Vault and rendered onto the file system by Vault Agent in [bootstrap.sh](./esxi/packer/scripts/bootstrap.sh), which is run as a provisioner (i know :-D) in the Terraform code.
-4. Generate an AppRole to be used in the build process by following the [AppRole Pull Authentication](https://learn.hashicorp.com/tutorials/vault/approle) Learn guide. Save the RoleID as `role_id` in the [castle_files](./esxi/packer/castle_files) and [moat_files](./esxi/packer/moat_files) directories. The SecretID will be provided as the [secret_id](./esxi/terraform/variables.tf#L26) terraform variable. This role, which I called `bootstrap`, should have a policy assigned similar to the below (substitute your path names, and add your particular cloud credential if using a cloud auto unseal):
+#### I. Trusted orchestrator setup
+Create the trusted orchestrator policy. This will be used by Terraform to issue wrapped SecretIDs to the nodes during the provisioning process.
 ```
+vault policy write trusted-orchestrator -<<EOF
+# the ability to generate wrapped secretIDs for the nomad server bootstrap approle
+path "auth/approle/role/bootstrap/secret*" {
+  capabilities = [ "create", "read", "update" ]
+  min_wrapping_ttl = "100s"
+  max_wrapping_ttl = "600s"
+}
+
+# required for vault terraform provider to function
+path "auth/token/create" {
+  capabilities = ["create", "update"]
+}
+
+# required to create
+path "auth/token/lookup-accessor" {
+  capabilities = ["update"]
+}
+
+# required to destroy
+path "auth/token/revoke-accessor" {
+  capabilities = ["update"]
+}
+EOF
+```
+
+Issue a Vault token for your Terraform workspace and set it as the `VAULT_TOKEN` environment variable in your Terraform workspace. In Terraform Cloud this variable should be marked as Sensitive.
+```
+vault token create -orphan \
+  -display-name=trusted-orchestrator-terraform \
+  -policy=trusted-orchestrator \
+  -explicit-max-ttl=4320h \
+  -ttl=4320h
+```
+
+Create a nomad server policy and Vault token role configuration as outlined in the [Nomad Vault Configuration Documentation](https://www.nomadproject.io/docs/integrations/vault-integration#token-role-based-integration).
+
+Create an AppRole called `bootstrap` to be used in the build process by following the [AppRole Pull Authentication](https://learn.hashicorp.com/tutorials/vault/approle) Learn guide. The bootstrap role, should have the nomad-server policy assigned, as well as a policy similar to the below for authorization to retrieve a certificate (substitute your path names, and add your particular cloud credential if using a cloud auto unseal):
+```
+vault policy write pki -<<EOF
 path "pki/intermediate/issue/hashidemos-io" {
   capabilities = [ "update" ]
 }
@@ -103,25 +143,51 @@ path "pki/intermediate/issue/hashidemos-io" {
 path "auth/token/create" {
   capabilities = ["create", "read", "update", "list"]
 }
+EOF
 ```
-5. Follow the [Build Your Own Certificate Authority](https://learn.hashicorp.com/tutorials/vault/pki-engine) guide to generate your root and intermediate CAs. Save the root certificate as `root.crt` in the [castle_files](./esxi/packer/castle_files) and [moat_files](./esxi/packer/moat_files) directories. Update the `cert.tpl` and `key.tpl` Vault Agent templates in the [castle_files](./esxi/packer/castle_files) and [moat_files](./esxi/packer/moat_files) directories with your host/domain/role names. These templates are for the provisioner script that runs in Terraform. It runs Vault Agent once to authenticate to Vault and issue certificates for the Vault servers to use.
 
-#### Futures
-- When looking to improve this architecture I will be looking at using wrapped SecretIDs and applying a CIDR binding per https://learn.hashicorp.com/tutorials/vault/approle-best-practices?in=vault/auth-methods#approle-response-wrapping.
-- Better to use the Vault provider instead of a bootstrap script?
+Here is how to create the bootstrap role:
+```
+vault write auth/approle/role/bootstrap \
+  secret_id_num_uses=1 \
+  secret_id_ttl=420s \
+  token_period=259200 \
+  token_policies="pki,gcp-kms,nomad-server"
+```
+Please check the [docs](https://www.vaultproject.io/api/auth/approle#create-update-approle) to understand what the above parameters do.
+
+Save the RoleID in a file called `role_id` and place it in the [castle files](./esxi/packer/castle/files) directory. 
+
+The SecretID is generated and delivered by Terraform as defined in [main.tf](./esxi/terraform/main.tf), and after booting the RoleID and wrapped SecretID are used by Vault Agent to authenticate to Vault and retrieve a token, using this [Vault Agent config](./esxi/packer/castle/files/vault-agent-bootstrap.hcl).
+
+Docs:
+- https://learn.hashicorp.com/tutorials/vault/pattern-approle?in=vault/recommended-patterns
+- https://www.nomadproject.io/docs/integrations/vault-integration
+
+#### II. Certificate authority setup
+Follow the [Build Your Own Certificate Authority](https://learn.hashicorp.com/tutorials/vault/pki-engine) guide to generate your root and intermediate CAs. Save the root certificate as `root.crt` in the [castle files](./esxi/packer/castle/files) directory. Update the `cert.tpl` and `key.tpl` Vault Agent templates in the [castle files](./esxi/packer/castle/files) directory with your host/domain/role names. These templates are for the provisioner script that runs in Terraform. It runs Vault Agent once to authenticate to Vault and issue certificates for the Vault servers to use.
+
+#### III. Customizations
+Configure your desired [seal stanza](https://www.vaultproject.io/docs/configuration/seal) in the [Vault configuration](./esxi/packer/castle_files/vault.hcl) file. This stanza is optional, and in the case of the master key, Vault will use the Shamir algorithm to cryptographically split the master key if this is not configured. I happen to use GCP KMS, which require GCP credentials be placed on each Vault server. There are a variety of ways to accomplish this. I have them retrieved from Vault and rendered onto the file system by Vault Agent in [bootstrap.sh](./esxi/packer/scripts/bootstrap.sh), which is run as a provisioner (i know :-D) in the Terraform code.
+
+Lastly, there are a couple simple steps you may need to perform.
+- Search and replace all IP addresses to match your private network address range.
+- If you do not have enterprise licenses search and replace all packages to oss.
 
 ## Enterprise Features in use
 Nomad
-- Dynamic Application Sizing
-- Automated Backups
-- Automated Upgrades
+- [Automated Backups](https://www.nomadproject.io/docs/enterprise#automated-backups)
+- [Automated Upgrades](https://www.nomadproject.io/docs/enterprise#automated-upgrades)
+- [Dynamic Application Sizing](https://www.nomadproject.io/docs/enterprise#dynamic-application-sizing)
 
 Consul
-- Automated Backups
-- Automated Upgrades
+- [Automated Backups](https://www.consul.io/docs/enterprise/backups)
+- [Automated Upgrades](https://www.consul.io/docs/enterprise/upgrades)
 
 Terraform Cloud
-- Terraform Cloud Agent
+- [Terraform Cloud Agent](https://www.terraform.io/docs/cloud/agents/index.html)
 
 ## Links and References
-- https://github.com/jescholl/nomad
+Going to need these at one point or another:
+- [Consul Outage Recovery](https://learn.hashicorp.com/tutorials/consul/recovery-outage)
+- [Nomad Outage Recovery](https://learn.hashicorp.com/tutorials/nomad/outage-recovery)

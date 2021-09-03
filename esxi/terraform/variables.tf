@@ -1,48 +1,71 @@
 variable "esxi_hostname" {
   description = "The address of your ESXi host"
+  type        = string
 }
 
 variable "esxi_password" {
   description = "ESXi account password to use"
+  sensitive   = true
+  type        = string
 }
 
 variable "esxi_username" {
   description = "ESXi user account name"
+  type        = string
 }
 
 variable "nodes_blue" {
-  description = "A map of host name and MAC address for blue nodes (if you are using Terraform Cloud set variable type to HCL)"
+  description = "A map of host names and MAC addresses for blue nodes"
+  type        = map(any)
 }
 
 variable "nodes_green" {
-  description = "A map of host name and MAC address for green nodes (if you are using Terraform Cloud set variable type to HCL)"
+  description = "A map of host names and MAC addresses for green nodes"
+  type        = map(any)
 }
 
-variable "nodes_moat" {
-  description = "A map of host name and MAC address for moat nodes (if you are using Terraform Cloud set variable type to HCL)"
-  default     = {}
+variable "node_moat" {
+  description = "A map of host name and network names and MAC addresses for moat node"
+  type        = object({ name = string, network_interfaces = map(any) })
 }
 
-variable "secret_id" {
-  description = "Secret ID to provide node for its bootstrap script"
+variable "node_nas" {
+  description = "A map of host name and MAC address for nas node"
+  type        = object({ name = string, mac_address = string })
 }
 
 variable "ssh_private_key" {
   description = "SSH private key to use for provisioner connection to remote hosts"
+  type        = string
 }
 
-variable "temp" {
-  description = "unused variable. using as a pasteboard"
+variable "ssh_username" {
+  description = "SSH username to use for provisioner connection to remote hosts"
+  type        = string
+  default     = "ubuntu"
 }
 
 variable "template_blue" {
   description = "Name of template to use for blue nodes"
+  type        = string
 }
 
 variable "template_green" {
   description = "Name of template to use for green nodes"
+  type        = string
 }
 
 variable "template_moat" {
   description = "Name of template to use for moat nodes"
+  type        = string
+}
+
+variable "template_nas" {
+  description = "Name of template to use for nas nodes"
+  type        = string
+}
+
+locals {
+  blue_hostnames  = [for k, v in var.nodes_blue : k]
+  green_hostnames = [for k, v in var.nodes_green : k]
 }
