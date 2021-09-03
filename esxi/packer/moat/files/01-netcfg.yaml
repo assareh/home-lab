@@ -6,11 +6,3 @@ network:
   ethernets:
     ens160:
       dhcp4: yes
-    ens161:
-      dhcp4: yes
-    ens192:
-      dhcp4: yes
-    ens224:
-      dhcp4: yes
-    ens256:
-      dhcp4: yes
