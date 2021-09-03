@@ -10,7 +10,7 @@ All images are based on ubuntu-18.04.5, using the `vmware-iso` builder.
 * **Moat**: (optional) NGINX proxy (may be eventually deprecated)
 
 ## Notes
-You'll need to create the NAS first as the Castle nodes depend on it. Line 93 of [castle.pkr.hcl](./castle/castle.pkr.hcl#L93) is where the NFS volume is mounted.
+You'll need to create the NAS first as the Castle nodes depend on it. Line 93 of [castle.pkr.hcl](./castle/castle.pkr.hcl#L93) is where the NFS volume is mounted. This needs to be a static IP address because this could execute before Consul is available to resolve a .consul address.
 
 ### Password Steps
 These are steps for how to set a linux user password in the preseed file:
@@ -19,7 +19,7 @@ These are steps for how to set a linux user password in the preseed file:
 3. use `mkpasswd -m sha-512` to generate the password hash that goes in the preseed.
 
 ### NAS
-I was lazy and do not manage the NAS with Terraform. I just ran Packer as shown below and use the resulting VM as the long lived virtual NAS. Since you'll be creating this machine first, you can either use whatever IP your DHCP server assigns, or configure a static IP manually. Most modern routers allow you to configure a static mapping based on MAC address so that is an option as well.
+Since you'll be creating this machine first, you can either take whatever IP your DHCP server assigns, or configure a static IP manually. If the former you'll want to then configure a static mapping on your router based on the NAS VM MAC address so that the IP does not change in the future.
 
 If you'd like to mirror the data volume across two datastores, please enable the breakpoint provisioner and change the `sudo zpool create data /dev/sdb` command to `sudo zpool create data mirror /dev/sdb /dev/sdc`.
 
