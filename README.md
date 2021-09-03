@@ -97,22 +97,45 @@ There is a simple Vagrantfile that you can use to spin up a single node Vault se
 #### I. Trusted orchestrator setup
 Create the trusted orchestrator policy. This will be used by Terraform to issue wrapped SecretIDs to the nodes during the provisioning process.
 ```
-path "auth/approle/role/+/secret*" {
+vault policy write trusted-orchestrator -<<EOF
+# the ability to generate wrapped secretIDs for the nomad server bootstrap approle
+path "auth/approle/role/bootstrap/secret*" {
   capabilities = [ "create", "read", "update" ]
   min_wrapping_ttl = "100s"
-  max_wrapping_ttl = "300s"
+  max_wrapping_ttl = "600s"
 }
+
+# required for vault terraform provider to function
+path "auth/token/create" {
+  capabilities = ["create", "update"]
+}
+
+# required to create
+path "auth/token/lookup-accessor" {
+  capabilities = ["update"]
+}
+
+# required to destroy
+path "auth/token/revoke-accessor" {
+  capabilities = ["update"]
+}
+EOF
 ```
 
-Issue a Vault token for your Terraform workspace, and set it as the `VAULT_TOKEN` environment variable. This should be marked as Sensitive.
+Issue a Vault token for your Terraform workspace and set it as the `VAULT_TOKEN` environment variable in your Terraform workspace. In Terraform Cloud this variable should be marked as Sensitive.
 ```
-vault token create -orphan -policy=trusted-orchestrator -explicit-max-ttl=4320h -ttl=4320h -display-name=trusted-orchestrator-terraform
+vault token create -orphan \
+  -display-name=trusted-orchestrator-terraform \
+  -policy=trusted-orchestrator \
+  -explicit-max-ttl=4320h \
+  -ttl=4320h
 ```
 
 Create a nomad server policy and Vault token role configuration as outlined in the [Nomad Vault Configuration Documentation](https://www.nomadproject.io/docs/integrations/vault-integration#token-role-based-integration).
 
 Create an AppRole called `bootstrap` to be used in the build process by following the [AppRole Pull Authentication](https://learn.hashicorp.com/tutorials/vault/approle) Learn guide. The bootstrap role, should have the nomad-server policy assigned, as well as a policy similar to the below for authorization to retrieve a certificate (substitute your path names, and add your particular cloud credential if using a cloud auto unseal):
 ```
+vault policy write pki -<<EOF
 path "pki/intermediate/issue/hashidemos-io" {
   capabilities = [ "update" ]
 }
@@ -120,6 +143,7 @@ path "pki/intermediate/issue/hashidemos-io" {
 path "auth/token/create" {
   capabilities = ["create", "read", "update", "list"]
 }
+EOF
 ```
 
 Here is how to create the bootstrap role:
