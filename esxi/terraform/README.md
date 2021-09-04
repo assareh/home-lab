@@ -1,10 +1,10 @@
 # ESXi Home Lab Terraform
 
-Terraform configuration to provision the Nomad/Consul/Vault servers based on the Packer VM templates. This code depends on the community provided [esxi](https://registry.terraform.io/providers/josenk/esxi/latest) Terraform provider. If you would like to provision this using Terraform Cloud, you'll need a Business tier entitlement to enable Terraform Cloud Agents (assuming your ESXi host is not reachable from the internet, and it probably shouldn't be.)
+Terraform configuration to provision the Nomad/Consul/Vault servers based on the Packer VM templates. This code depends on the community provided [esxi](https://registry.terraform.io/providers/josenk/esxi/latest) Terraform provider. Please note the [requirements](https://github.com/josenk/terraform-provider-esxi#requirements) for using this provider, including ovftool. If you would like to provision this using Terraform Cloud, you'll need a Business tier entitlement to enable Terraform Cloud Agents (assuming your ESXi host is not reachable from the internet, and it probably shouldn't be.)
 
 As described in the repository [README](../../README.md), I resort to using statically assigned IP addresses in this environment. I have configured static assignments on my router based on MAC address as listed below, and specify the MAC address for each machine in the terraform code.
 
-There is a [script](./setup_castle.tpl) that is run on each machine once it's provisioned. This is a one time bootstrap that uses the provided secret_id to authenticate to Vault and fetch any certificates and other secrets as needed, as well as update the `cluster_addr` value in the [Vault config](../packer/castle_files/vault.hcl). The primary need for this provisioner is due to the fact that some configuration can only be done after the system's IP address is known. 
+There is a [script](./setup_castle.tpl) that is run on each machine once it's provisioned. This is a one time bootstrap that uses the provided secret_id to authenticate to Vault and fetch any certificates and other secrets as needed, as well as update the `cluster_addr` value in the [Vault config](../packer/castle/files/vault.hcl). The primary need for this provisioner is due to the fact that some configuration can only be done after the system's IP address is known. 
 
 ## High level steps
 Since I don't have an auto scaling group type of structure, I am using a blue/green methodology to perform upgrades.

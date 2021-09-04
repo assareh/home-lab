@@ -92,13 +92,15 @@ build {
       "sudo mv /home/${var.ssh_username}/nfs.json /etc/consul.d/.",
       "sudo chmod 640 /etc/consul.d/*",
       "sudo chown -R consul:consul /etc/consul.d",
+      "sudo hostnamectl set-hostname nas",
+      "echo '127.0.1.1       nas.unassigned-domain        nas' | sudo tee -a /etc/hosts",
       "sudo systemctl enable consul && sudo systemctl start consul"
     ]
   }
 
   provisioner "breakpoint" {
     disable = true
-    note    = "If mirroring the data volume, this is when you would go add the third disk. (Check Readme for details)"
+    note    = "If mirroring the data volume, this is when you would go add the third disk and reboot before continuing. (Check Readme for details)"
   }
 
   provisioner "shell" {

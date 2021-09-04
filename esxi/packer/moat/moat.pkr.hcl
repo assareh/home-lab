@@ -105,6 +105,8 @@ build {
       "sudo mv /home/${var.ssh_username}/nginx.json /etc/consul.d/.",
       "sudo chmod 640 /etc/consul.d/*",
       "sudo chown consul:consul /etc/consul.d/*",
+      "sudo hostnamectl set-hostname moat",
+      "echo '127.0.1.1       moat.unassigned-domain        moat' | sudo tee -a /etc/hosts",
       "sudo systemctl enable consul",
       "sudo systemctl start consul",
       "sudo systemctl enable consul-template",
