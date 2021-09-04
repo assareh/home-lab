@@ -174,6 +174,9 @@ Lastly, there are a couple simple steps you may need to perform.
 - Search and replace all IP addresses to match your private network address range.
 - If you do not have enterprise licenses search and replace all packages to oss.
 
+#### Futures
+- When looking to improve this overall architecture I will be looking at adding some automated pipelines.
+
 ## Enterprise Features in use
 Nomad
 - [Automated Backups](https://www.nomadproject.io/docs/enterprise#automated-backups)
