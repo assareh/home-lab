@@ -171,7 +171,7 @@ job "traefik" {
         data = <<EOF
 [accessLog]
   filePath = "/opt/traefik/access.log"
-  
+
 [api]
   dashboard = true
   insecure  = true
@@ -209,7 +209,7 @@ job "traefik" {
 
 [log]
   filePath = "/opt/traefik/traefik.log"
-  
+
 # Enable Consul Catalog configuration backend.
 [providers.consulCatalog]
     connectAware     = true
