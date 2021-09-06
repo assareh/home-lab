@@ -162,14 +162,14 @@ Docs:
 - https://www.nomadproject.io/docs/integrations/vault-integration
 
 #### II. Certificate authority setup
-Follow the [Build Your Own Certificate Authority](https://learn.hashicorp.com/tutorials/vault/pki-engine) guide to generate your root and intermediate CAs. Save the root certificate as `root.crt` in the [castle files](./esxi/packer/castle/files) directory. Update the `cert.tpl` and `key.tpl` Vault Agent templates in the [castle files](./esxi/packer/castle/files) directory with your host/domain/role names. These templates are for the provisioner script that runs in Terraform. It runs Vault Agent once to authenticate to Vault and issue certificates for the Vault servers to use.
+1. Follow the [Build Your Own Certificate Authority](https://learn.hashicorp.com/tutorials/vault/pki-engine) guide to generate your root and intermediate CAs.
+2. Save the root certificate as `root.crt` in the [castle files](./esxi/packer/castle/files) directory.
+3. Update the `cert.tpl` and `key.tpl` Vault Agent templates in the [castle files](./esxi/packer/castle/files) directory with your host/domain/role names. These templates are for the provisioner script that runs in Terraform. It runs Vault Agent once to authenticate to Vault and issue certificates for the Vault servers to use.
 
 #### III. Customizations
-Configure your desired [seal stanza](https://www.vaultproject.io/docs/configuration/seal) in the [Vault configuration](./esxi/packer/castle/files/vault.hcl) file. This stanza is optional, and in the case of the master key, Vault will use the Shamir algorithm to cryptographically split the master key if this is not configured. I happen to use GCP KMS, which require GCP credentials be placed on each Vault server. There are a variety of ways to accomplish this. I have them retrieved from Vault and rendered onto the file system by Vault Agent in [bootstrap.sh](./esxi/packer/scripts/bootstrap.sh), which is run as a provisioner (i know :-D) in the Terraform code.
-
-Lastly, there are a couple simple steps you may need to perform.
-- Search and replace all IP addresses to match your private network address range.
-- If you do not have enterprise licenses search and replace all packages to oss.
+1. Configure your desired [seal stanza](https://www.vaultproject.io/docs/configuration/seal) in the [Vault configuration](./esxi/packer/castle/files/vault.hcl) file. This stanza is optional, and in the case of the master key, Vault will use the Shamir algorithm to cryptographically split the master key if this is not configured. I happen to use GCP KMS, which require GCP credentials be placed on each Vault server. There are a variety of ways to accomplish this. I have them retrieved from Vault and rendered onto the file system by Vault Agent in [setup_castle.tpl](./esxi/terraform/setup_castle.tpl), which is run as a provisioner (i know :-D) in the Terraform code.
+2. Search and replace all IP addresses to match your private network address range.
+3. If you do not have enterprise licenses search and replace all packages to oss.
 
 #### Futures
 - When looking to improve this overall architecture I will be looking at adding some automated pipelines.
