@@ -91,7 +91,7 @@ job "traefik" {
 
       env {
         KEEPALIVED_INTERFACE     = "ens160"
-        KEEPALIVED_VIRTUAL_IPS   = "192.168.20.200"
+        KEEPALIVED_VIRTUAL_IPS   = "192.168.0.200"
         KEEPALIVED_STATE         = "BACKUP"
         KEEPALIVED_UNICAST_PEERS = ""
       }
