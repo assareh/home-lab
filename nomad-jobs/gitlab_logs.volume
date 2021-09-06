@@ -1,0 +1,14 @@
+# Full configuration options can be found at:
+# https://www.nomadproject.io/docs/commands/volume/create#volume-specification
+
+id           = "gitlab_logs"
+name         = "gitlab_logs"
+type         = "csi"
+plugin_id    = "nas"
+capacity_max = "12G"
+capacity_min = "3G"
+
+capability {
+  access_mode     = "single-node-writer"
+  attachment_mode = "file-system"
+}

@@ -89,15 +89,6 @@ build {
 
   provisioner "shell" {
     inline = [
-      "sudo mkdir /mnt/data && sudo chmod 777 /mnt/data",
-      "echo '192.168.0.55:/data    /mnt/data   nfs auto,nofail,noatime,nolock,intr,tcp,actimeo=1800 0 0' | sudo tee -a /etc/fstab",
-      "sudo mount -a",
-      "df -h"
-    ]
-  }
-
-  provisioner "shell" {
-    inline = [
       "curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -",
       "sudo apt-add-repository \"deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main\"",
       "sudo apt-get update",

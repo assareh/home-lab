@@ -2,7 +2,6 @@ job "splunk" {
   datacenters = ["dc1"]
 
   group "splunk" {
-
     vault {
       policies = ["splunk"]
     }
@@ -23,17 +22,38 @@ job "splunk" {
       }
     }
 
+    volume "splunk_etc" {
+      type            = "csi"
+      source          = "splunk_etc"
+      read_only       = false
+      attachment_mode = "file-system"
+      access_mode     = "single-node-writer"
+    }
+
+    volume "splunk_var" {
+      type            = "csi"
+      source          = "splunk_var"
+      read_only       = false
+      attachment_mode = "file-system"
+      access_mode     = "single-node-writer"
+    }
+
     task "splunk" {
       driver = "docker"
 
       config {
         image = "splunk/splunk:8.1.3-debian"
         ports = ["http", "collector", "syslog"]
+      }
 
-        volumes = [
-          "/mnt/data/splunk/etc:/opt/splunk/etc",
-          "/mnt/data/splunk/var:/opt/splunk/var",
-        ]
+      volume_mount {
+        volume      = "splunk_etc"
+        destination = "/opt/splunk/etc"
+      }
+
+      volume_mount {
+        volume      = "splunk_var"
+        destination = "/opt/splunk/var"
       }
 
       env {

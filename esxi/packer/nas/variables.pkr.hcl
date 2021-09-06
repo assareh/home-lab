@@ -46,11 +46,6 @@ variable "vm_cpu_num" {
   default = "1"
 }
 
-variable "vm_disk_additional_size" {
-  type    = string
-  default = "122880"
-}
-
 variable "vm_disk_size" {
   type    = string
   default = "20480"

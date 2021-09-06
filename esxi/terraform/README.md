@@ -18,9 +18,9 @@ An ESXi host
 Recommended resources
 
 ## First run
-Review the terraform code *carefully*. You will need to change and customize for your environment. For example the `virtual_network` names will need to match the network name configured on your ESXi host. The default is usually "VM Network". The `disk_store` names will need to match the name of the datastore on your ESXi host that you'd like to use. The MAC addresses will need to match what you've selected and configured on your DHCP server.
+Review the terraform code *carefully*. Provide values for terraform variables.
 
-Configure terraform variables. See descriptions.
+If you do not wish to mirror the ZFS volume on the NAS across two datastores, remove the `nas_disk2` resource, and change the first line of the nas remote-exec provisioner to `sudo zpool create data /dev/sdb`.
 
 Deploy it with `terraform apply`. It may take 10-15 minutes to complete.
 

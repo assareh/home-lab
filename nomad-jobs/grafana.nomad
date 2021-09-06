@@ -11,17 +11,38 @@ job "grafana" {
       port "http" {}
     }
 
+    volume "grafana_etc" {
+      type            = "csi"
+      source          = "grafana_etc"
+      read_only       = false
+      attachment_mode = "file-system"
+      access_mode     = "single-node-writer"
+    }
+
+    volume "grafana_lib" {
+      type            = "csi"
+      source          = "grafana_lib"
+      read_only       = false
+      attachment_mode = "file-system"
+      access_mode     = "single-node-writer"
+    }
+
     task "grafana" {
       driver = "docker"
 
       config {
         image = "grafana/grafana:7.5.5"
         ports = ["http"]
+      }
 
-        volumes = [
-          "/mnt/data/grafana/etc:/etc/grafana",
-          "/mnt/data/grafana/lib:/var/lib/grafana",
-        ]
+      volume_mount {
+        volume      = "grafana_etc"
+        destination = "/etc/grafana"
+      }
+
+      volume_mount {
+        volume      = "grafana_lib"
+        destination = "/var/lib/grafana"
       }
 
       env {
@@ -31,7 +52,7 @@ job "grafana" {
       }
 
       artifact {
-        source      = "git::https://grafana-dashboards"
+        source      = "git::https://gitlab.hashidemos.io/grafana-dashboards"
         destination = "local/dashboards"
       }
 

@@ -27,26 +27,6 @@ autopilot {
 client {
   enabled    = true
   node_class = "castle"
-
-  host_volume "nomad-snapshots" {
-    path      = "/mnt/data/nomad-snapshots"
-    read_only = false
-  }
-
-  host_volume "consul-snapshots" {
-    path      = "/mnt/data/consul-snapshots"
-    read_only = false
-  }
-
-  host_volume "influxdb" {
-    path      = "/mnt/data/influxdb"
-    read_only = false
-  }
-
-  host_volume "unifi" {
-    path      = "/mnt/data/unifi"
-    read_only = false
-  }
 }
 
 plugin "containerd-driver" {
@@ -60,7 +40,7 @@ plugin "docker" {
   config {
     allow_caps = ["AUDIT_WRITE", "CHOWN", "DAC_OVERRIDE", "FOWNER", "FSETID", "KILL", "MKNOD", "NET_ADMIN",
     "NET_BIND_SERVICE", "NET_BROADCAST", "NET_RAW", "SETFCAP", "SETGID", "SETPCAP", "SETUID", "SYS_CHROOT"]
-
+    allow_privileged = true # required for NFS CSI Plugin
     volumes {
       enabled = true
     }

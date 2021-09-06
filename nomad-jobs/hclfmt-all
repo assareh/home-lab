@@ -2,4 +2,7 @@
 for jobfile in *.nomad; do
   hclfmt -w $jobfile
 done
+for jobfile in *.volume; do
+  hclfmt -w $jobfile
+done
 echo 'Done, all nice and formatted!'

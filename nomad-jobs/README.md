@@ -2,13 +2,13 @@
 
 A set of Nomad job files for services and applications I run in my home lab. These may require modification to work in your environment.
 
-There is Terraform code here if you'd like to manage these with Terraform and the Nomad provider, however this is not required.
+Storage is provided via Florian Apolloner's [NFS CSI Plugin](https://gitlab.com/rocketduck/csi-plugin-nfs) which should work with any NFS share. Please review his documentation for details on how to configure and use it.
 
-## Best practices
-- Explicitly specify the tag version.
+## Notes
+~~There is Terraform code here if you'd like to manage these with Terraform and the Nomad provider, however this is not required.~~ This is temporarily unavailable as the Nomad provider doesn't seem to support CSI volumes yet. GH issue TBC.
 
-## Documentation
-What is keepalived for
+### Best practices
+- Explicitly specify the tag version for more controlled updates/upgrades.
 
 ### GitLab
 - [Configuring external URL](https://gitlab.com/gitlab-org/omnibus-gitlab/-/blob/master/doc/settings/configuration.md#configuring-the-external-url-for-gitlab)
@@ -18,7 +18,7 @@ What is keepalived for
 Need to update dashboards location
 
 ### hclfmt-all
-Script to invoke linter on all nomad job files in the folder. Requires the deprecated [hclfmt](https://github.com/fatih/hclfmt) be installed and available in your path.
+Script to invoke linter on all nomad files in the folder. Requires the deprecated [hclfmt](https://github.com/fatih/hclfmt) be installed and available in your path.
 
 ### Pi-hole
 I am using [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation) as the resolver, this is not required and can be removed.
@@ -27,17 +27,18 @@ I am using [cloudflared](https://developers.cloudflare.com/cloudflare-one/connec
 https://docs.splunk.com/Documentation/Splunk/8.2.1/Admin/MoreaboutSplunkFree
 
 ### Traefik
-I am using the [Let's Encrypt integration](https://doc.traefik.io/traefik/https/acme/) to automatically obtain and renew a publicly signed wildcard certificate. This is not required.
+I am using the [Let's Encrypt integration](https://doc.traefik.io/traefik/https/acme/) to automatically obtain and renew a publicly signed wildcard certificate. This is not required. You'll need to search and replace all tags with your domain name.
+
+[Keepalived](https://www.keepalived.org) is used to provide a static VIP (virtual addresss).
 
 #### Issues
 - Watching [#7430](https://github.com/traefik/traefik/issues/7430) for a UDP fix
 
 ## To do list
 * properly store traefik acme
-* add notes of why i customized pihole and homebridge images
 * document "dnsmasq.cname=true"
 * roll out consul connect now that traefik 2.5
-* enhance service checks and https://www.nomadproject.io/docs/job-specification/check_restart
+* update stanzas, enhance service checks, and https://www.nomadproject.io/docs/job-specification/check_restart
 * can send docker logs to splunk https://docs.docker.com/config/containers/logging/configure/
 
 ## Links and References

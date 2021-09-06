@@ -3,9 +3,11 @@ job "unifi" {
 
   group "unifi" {
     volume "unifi" {
-      type      = "host"
-      read_only = false
-      source    = "unifi"
+      type            = "csi"
+      source          = "unifi"
+      read_only       = false
+      attachment_mode = "file-system"
+      access_mode     = "single-node-writer"
     }
 
     network {
