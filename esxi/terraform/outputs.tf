@@ -15,5 +15,5 @@ output "ip_address_nas" {
 }
 
 output "note" {
-  value = "There's something wrong with this output where it's grabbing the floating VIP address."
+  value = "It's grabbing the floating VIP addresses instead of the actual node IP."
 }

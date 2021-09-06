@@ -3,9 +3,11 @@ job "unifi" {
 
   group "unifi" {
     volume "unifi" {
-      type      = "host"
-      read_only = false
-      source    = "unifi"
+      type            = "csi"
+      source          = "unifi"
+      read_only       = false
+      attachment_mode = "file-system"
+      access_mode     = "single-node-writer"
     }
 
     network {
@@ -29,7 +31,7 @@ job "unifi" {
 
       env {
         KEEPALIVED_INTERFACE     = "ens160"
-        KEEPALIVED_VIRTUAL_IPS   = "192.168.0.250"
+        KEEPALIVED_VIRTUAL_IPS   = "192.168.20.250"
         KEEPALIVED_STATE         = "BACKUP"
         KEEPALIVED_UNICAST_PEERS = ""
       }

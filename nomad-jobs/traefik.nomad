@@ -1,10 +1,19 @@
+# need to update to system job - logs be unique per node as in access log is node.name.log
 job "traefik" {
   datacenters = ["dc1"]
-  type        = "system"
+  type        = "service"
 
   group "traefik" {
     vault {
       policies = ["gcloud"]
+    }
+
+    volume "traefik" {
+      type            = "csi"
+      source          = "traefik"
+      read_only       = false
+      attachment_mode = "file-system"
+      access_mode     = "multi-node-multi-writer"
     }
 
     update {
@@ -82,7 +91,7 @@ job "traefik" {
 
       env {
         KEEPALIVED_INTERFACE     = "ens160"
-        KEEPALIVED_VIRTUAL_IPS   = "192.168.0.200"
+        KEEPALIVED_VIRTUAL_IPS   = "192.168.20.200"
         KEEPALIVED_STATE         = "BACKUP"
         KEEPALIVED_UNICAST_PEERS = ""
       }
@@ -139,13 +148,17 @@ job "traefik" {
       driver = "docker"
 
       config {
-        image        = "traefik:v2.5.0-rc5"
+        image        = "traefik:v2.5"
         network_mode = "host"
 
         volumes = [
           "local/traefik.toml:/etc/traefik/traefik.toml",
-          "/mnt/data/traefik:/opt/traefik",
         ]
+      }
+
+      volume_mount {
+        volume      = "traefik"
+        destination = "/opt/traefik"
       }
 
       env {
@@ -158,7 +171,7 @@ job "traefik" {
         data = <<EOF
 [accessLog]
   filePath = "/opt/traefik/access.log"
-
+  
 [api]
   dashboard = true
   insecure  = true
@@ -196,7 +209,7 @@ job "traefik" {
 
 [log]
   filePath = "/opt/traefik/traefik.log"
-
+  
 # Enable Consul Catalog configuration backend.
 [providers.consulCatalog]
     connectAware     = true

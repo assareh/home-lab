@@ -8,9 +8,12 @@ provider "nomad" {
 # https://registry.terraform.io/providers/hashicorp/nomad/latest/docs/resources/job
 
 resource "nomad_job" "consul-backups" {
-  jobspec = templatefile("${path.module}/consul-backups.nomad", {
-    config = file("${path.module}/consul-snapshot-agent-config.json")
-  })
+  jobspec = file("${path.module}/consul-backups.nomad")
+
+  hcl2 {
+    enabled  = true
+    allow_fs = true
+  }
 }
 
 resource "nomad_job" "consul-esm" {
@@ -77,9 +80,12 @@ resource "nomad_job" "influxdb" {
 }
 
 resource "nomad_job" "nomad-backups" {
-  jobspec = templatefile("${path.module}/nomad-backups.nomad", {
-    config = file("${path.module}/nomad-snapshot-agent-config.hcl")
-  })
+  jobspec = file("${path.module}/nomad-backups.nomad")
+
+  hcl2 {
+    enabled  = true
+    allow_fs = true
+  }
 }
 
 resource "nomad_job" "pi-hole" {

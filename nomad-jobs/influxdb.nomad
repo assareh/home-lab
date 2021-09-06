@@ -10,9 +10,11 @@ job "influxdb" {
     }
 
     volume "influxdb" {
-      type      = "host"
-      read_only = false
-      source    = "influxdb"
+      type            = "csi"
+      source          = "influxdb"
+      read_only       = false
+      attachment_mode = "file-system"
+      access_mode     = "single-node-writer"
     }
 
     task "influxdb" {
@@ -21,7 +23,6 @@ job "influxdb" {
       volume_mount {
         volume      = "influxdb"
         destination = "/var/lib/influxdb"
-        read_only   = false
       }
 
       config {

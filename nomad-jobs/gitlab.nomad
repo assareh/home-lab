@@ -8,6 +8,30 @@ job "gitlab" {
       }
     }
 
+    volume "gitlab_config" {
+      type            = "csi"
+      source          = "gitlab_config"
+      read_only       = false
+      attachment_mode = "file-system"
+      access_mode     = "single-node-writer"
+    }
+
+    volume "gitlab_data" {
+      type            = "csi"
+      source          = "gitlab_data"
+      read_only       = false
+      attachment_mode = "file-system"
+      access_mode     = "single-node-writer"
+    }
+
+    volume "gitlab_logs" {
+      type            = "csi"
+      source          = "gitlab_logs"
+      read_only       = false
+      attachment_mode = "file-system"
+      access_mode     = "single-node-writer"
+    }
+
     task "gitlab" {
       driver       = "docker"
       kill_timeout = "45s"
@@ -15,12 +39,21 @@ job "gitlab" {
       config {
         image = "gitlab/gitlab-ee:13.11.1-ee.0"
         ports = ["https"]
+      }
 
-        volumes = [
-          "/mnt/data/gitlab/config:/etc/gitlab",
-          "/mnt/data/gitlab/logs:/var/log/gitlab",
-          "/mnt/data/gitlab/data:/var/opt/gitlab",
-        ]
+      volume_mount {
+        volume      = "gitlab_config"
+        destination = "/etc/gitlab"
+      }
+
+      volume_mount {
+        volume      = "gitlab_data"
+        destination = "/var/opt/gitlab"
+      }
+
+      volume_mount {
+        volume      = "gitlab_logs"
+        destination = "/var/log/gitlab"
       }
 
       service {

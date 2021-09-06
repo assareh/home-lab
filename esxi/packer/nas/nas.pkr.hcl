@@ -22,7 +22,6 @@ source "vmware-iso" "ubuntu-18-nas" {
     "<enter>"
   ]
   cpus                 = "${var.vm_cpu_num}"
-  disk_additional_size = ["${var.vm_disk_additional_size}"]
   disk_size            = "${var.vm_disk_size}"
   disk_type_id         = "thin"
   floppy_files         = ["./preseed.cfg"]
@@ -95,20 +94,6 @@ build {
       "sudo hostnamectl set-hostname nas",
       "echo '127.0.1.1       nas.unassigned-domain        nas' | sudo tee -a /etc/hosts",
       "sudo systemctl enable consul && sudo systemctl start consul"
-    ]
-  }
-
-  provisioner "breakpoint" {
-    disable = true
-    note    = "If mirroring the data volume, this is when you would go add the third disk and reboot before continuing. (Check Readme for details)"
-  }
-
-  provisioner "shell" {
-    inline = [
-      "sudo zpool create data /dev/sdb",
-      "sudo chmod 777 /data",
-      "echo \"/data    192.168.0.0/255.255.255.0(rw,sync,no_root_squash,no_subtree_check)\" | sudo tee -a /etc/exports",
-      "sudo systemctl restart nfs-kernel-server"
     ]
   }
 }

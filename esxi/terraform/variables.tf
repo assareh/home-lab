@@ -1,5 +1,20 @@
+variable "esxi_datastore" {
+  description = "The ESXi datastore where the virtual machines will be created"
+  type        = string
+}
+
+variable "esxi_datastore_nas_mirror" {
+  description = "The ESXi datastore where the NAS mirror disk will be created"
+  type        = string
+}
+
 variable "esxi_hostname" {
   description = "The address of your ESXi host"
+  type        = string
+}
+
+variable "esxi_network_name" {
+  description = "The ESXi network name to attach the network interfaces"
   type        = string
 }
 
@@ -11,6 +26,16 @@ variable "esxi_password" {
 
 variable "esxi_username" {
   description = "ESXi user account name"
+  type        = string
+}
+
+variable "nas_allow_ip_cidr" {
+  description = "This value will be used in the NAS /etc/exports file to specify which IP CIDR is allowed to access the NFS share. Example: 192.168.0.0/24"
+  type        = string
+}
+
+variable "nas_disk_size" {
+  description = "Size (in GB) of storage volume to create on NAS VM"
   type        = string
 }
 
@@ -26,7 +51,7 @@ variable "nodes_green" {
 
 variable "node_moat" {
   description = "A map of host name and network names and MAC addresses for moat node"
-  type        = object({ name = string, network_interfaces = map(any) })
+  type        = object({ name = string, network_interfaces = list(map(any)) })
 }
 
 variable "node_nas" {

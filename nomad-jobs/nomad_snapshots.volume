@@ -1,0 +1,14 @@
+# Full configuration options can be found at:
+# https://www.nomadproject.io/docs/commands/volume/create#volume-specification
+
+id           = "nomad_snapshots"
+name         = "nomad_snapshots"
+type         = "csi"
+plugin_id    = "nas"
+capacity_max = "210M"
+capacity_min = "70M"
+
+capability {
+  access_mode     = "multi-node-multi-writer"
+  attachment_mode = "file-system"
+}
