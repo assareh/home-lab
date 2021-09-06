@@ -35,7 +35,6 @@ I am using the [Let's Encrypt integration](https://doc.traefik.io/traefik/https/
 - Watching [#7430](https://github.com/traefik/traefik/issues/7430) for a UDP fix
 
 ## To do list
-* properly store traefik acme
 * document "dnsmasq.cname=true"
 * roll out consul connect now that traefik 2.5
 * update stanzas, enhance service checks, and https://www.nomadproject.io/docs/job-specification/check_restart
