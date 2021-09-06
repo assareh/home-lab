@@ -92,7 +92,7 @@ In my environment at that stage I configured the real cluster as a DR secondary,
 There is a simple Vagrantfile that you can use to spin up a single node Vault server [here](./vagrant/Vagrantfile).
 
 #### I. Trusted orchestrator setup
-Create the trusted orchestrator policy. This will be used by Terraform to issue wrapped SecretIDs to the nodes during the provisioning process.
+1. Create the trusted orchestrator policy. This will be used by Terraform to issue wrapped SecretIDs to the nodes during the provisioning process.
 ```
 vault policy write trusted-orchestrator -<<EOF
 # the ability to generate wrapped secretIDs for the nomad server bootstrap approle
@@ -119,7 +119,7 @@ path "auth/token/revoke-accessor" {
 EOF
 ```
 
-Issue a Vault token for your Terraform workspace and set it as the `VAULT_TOKEN` environment variable in your Terraform workspace. In Terraform Cloud this variable should be marked as Sensitive.
+2. Issue a Vault token for your Terraform workspace and set it as the `VAULT_TOKEN` environment variable in your Terraform workspace. In Terraform Cloud this variable should be marked as Sensitive.
 ```
 vault token create -orphan \
   -display-name=trusted-orchestrator-terraform \
@@ -128,9 +128,9 @@ vault token create -orphan \
   -ttl=4320h
 ```
 
-Create a nomad server policy and Vault token role configuration as outlined in the [Nomad Vault Configuration Documentation](https://www.nomadproject.io/docs/integrations/vault-integration#token-role-based-integration).
+3. Create a nomad server policy and Vault token role configuration as outlined in the [Nomad Vault Configuration Documentation](https://www.nomadproject.io/docs/integrations/vault-integration#token-role-based-integration).
 
-Create an AppRole called `bootstrap` to be used in the build process by following the [AppRole Pull Authentication](https://learn.hashicorp.com/tutorials/vault/approle) Learn guide. The bootstrap role, should have the nomad-server policy assigned, as well as a policy similar to the below for authorization to retrieve a certificate (substitute your path names, and add your particular cloud credential if using a cloud auto unseal):
+4. Create an AppRole called `bootstrap` to be used in the build process by following the [AppRole Pull Authentication](https://learn.hashicorp.com/tutorials/vault/approle) Learn guide. The bootstrap role, should have the nomad-server policy assigned, as well as a policy similar to the below for authorization to retrieve a certificate (substitute your path names, and add your particular cloud credential if using a cloud auto unseal):
 ```
 vault policy write pki -<<EOF
 path "pki/intermediate/issue/hashidemos-io" {
@@ -153,7 +153,7 @@ vault write auth/approle/role/bootstrap \
 ```
 Please check the [docs](https://www.vaultproject.io/api/auth/approle#create-update-approle) to understand what the above parameters do.
 
-Save the RoleID in a file called `role_id` and place it in the [castle files](./esxi/packer/castle/files) directory. 
+5. Save the RoleID in a file called `role_id` and place it in the [castle files](./esxi/packer/castle/files) directory. 
 
 The SecretID is generated and delivered by Terraform as defined in [main.tf](./esxi/terraform/main.tf), and after booting the RoleID and wrapped SecretID are used by Vault Agent to authenticate to Vault and retrieve a token, using this [Vault Agent config](./esxi/packer/castle/files/vault-agent-bootstrap.hcl).
 
