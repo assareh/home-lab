@@ -26,64 +26,6 @@ job "unifi" {
       }
     }
 
-    task "keepalived" {
-      driver = "docker"
-
-      env {
-        KEEPALIVED_INTERFACE     = "ens160"
-        KEEPALIVED_VIRTUAL_IPS   = "192.168.0.250"
-        KEEPALIVED_STATE         = "BACKUP"
-        KEEPALIVED_UNICAST_PEERS = ""
-      }
-
-      config {
-        image        = "osixia/keepalived:2.0.20"
-        network_mode = "host"
-        cap_add = [
-          "NET_ADMIN",
-          "NET_BROADCAST",
-          "NET_RAW"
-        ]
-      }
-
-      resources {
-        cpu    = 100
-        memory = 128
-      }
-
-      scaling "cpu" {
-        enabled = true
-        min     = 50
-        max     = 500
-
-        policy {
-          cooldown            = "5m"
-          evaluation_interval = "30s"
-
-          check "95pct" {
-            strategy "app-sizing-percentile" {
-              percentile = "95"
-            }
-          }
-        }
-      }
-
-      scaling "mem" {
-        enabled = true
-        min     = 128
-        max     = 512
-
-        policy {
-          cooldown            = "5m"
-          evaluation_interval = "30s"
-
-          check "max" {
-            strategy "app-sizing-max" {}
-          }
-        }
-      }
-    }
-
     task "unifi" {
       driver = "docker"
 

@@ -29,7 +29,7 @@ https://docs.splunk.com/Documentation/Splunk/8.2.1/Admin/MoreaboutSplunkFree
 ### Traefik
 I am using the [Let's Encrypt integration](https://doc.traefik.io/traefik/https/acme/) to automatically obtain and renew a publicly signed wildcard certificate. This is not required. You'll need to search and replace all tags with your domain name.
 
-[Keepalived](https://www.keepalived.org) is used to provide a static VIP (virtual addresss).
+[Keepalived](https://www.keepalived.org) is used to provide a consistent static VIP (virtual addresss). This is useful if you would like to expose a port on your router and forward traffic to the Traefik ingress.
 
 #### Issues
 - Watching [#7430](https://github.com/traefik/traefik/issues/7430) for a UDP fix
