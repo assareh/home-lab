@@ -5,7 +5,7 @@ job "traefik" {
 
   group "traefik" {
     vault {
-      policies = ["gcloud"]
+      policies = ["traefik"]
     }
 
     volume "traefik" {
