@@ -57,6 +57,11 @@ job "traefik" {
         port     = "api"
         interval = "10s"
         timeout  = "2s"
+
+        check_restart {
+          limit = 3
+          grace = "60s"
+        }
       }
     }
 
@@ -70,6 +75,11 @@ job "traefik" {
         port     = "http"
         interval = "10s"
         timeout  = "2s"
+
+        check_restart {
+          limit = 3
+          grace = "60s"
+        }
       }
     }
 
@@ -83,6 +93,11 @@ job "traefik" {
         port     = "https"
         interval = "10s"
         timeout  = "2s"
+
+        check_restart {
+          limit = 3
+          grace = "60s"
+        }
       }
     }
 
@@ -148,7 +163,7 @@ job "traefik" {
       driver = "docker"
 
       config {
-        image        = "traefik:v2.5"
+        image        = "traefik:v2.5.0"
         network_mode = "host"
 
         volumes = [
@@ -162,7 +177,7 @@ job "traefik" {
       }
 
       env {
-        GCE_PROJECT              = ""
+        GCE_PROJECT              = "hashidemos-io-dns"
         GCE_SERVICE_ACCOUNT_FILE = "secrets/gce-service-account.json"
         TZ                       = "US/Los_Angeles"
       }
@@ -171,13 +186,13 @@ job "traefik" {
         data = <<EOF
 [accessLog]
   filePath = "/opt/traefik/access.log"
-
+  
 [api]
   dashboard = true
   insecure  = true
 
 [certificatesResolvers.letsencrypt.acme]
-  email = ""
+  email = "andy@hashidemos.io"
   storage = "/opt/traefik/acme.json"
   # use staging server for testing
   # caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
@@ -203,9 +218,6 @@ job "traefik" {
 
 [entryPoints.traefik]
   address = ":8081"
-
-[entryPoints.vmrc]
-  address = ":902"
 
 [log]
   filePath = "/opt/traefik/traefik.log"

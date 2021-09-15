@@ -100,9 +100,17 @@ build {
   }
 
   provisioner "shell" {
+    environment_vars = [
+      "consul_gossip=${local.consul_gossip}"
+    ]
     inline = [
+      "sudo mv /home/${var.ssh_username}/01-netcfg.yaml /etc/netplan/01-netcfg.yaml",
+      "sudo netplan apply",
+      "sudo mv /home/${var.ssh_username}/nginx/* /etc/nginx/.",
       "sudo mv /home/${var.ssh_username}/consul.hcl /etc/consul.d/.",
       "sudo mv /home/${var.ssh_username}/nginx.json /etc/consul.d/.",
+      "chmod +x /home/${var.ssh_username}/gossip.sh",
+      "/home/${var.ssh_username}/gossip.sh",
       "sudo chmod 640 /etc/consul.d/*",
       "sudo chown consul:consul /etc/consul.d/*",
       "sudo hostnamectl set-hostname moat",
@@ -110,10 +118,7 @@ build {
       "sudo systemctl enable consul",
       "sudo systemctl start consul",
       "sudo systemctl enable consul-template",
-      "sudo systemctl start consul-template",
-      "sudo mv /home/${var.ssh_username}/nginx/* /etc/nginx/.",
-      "sudo mv /home/${var.ssh_username}/01-netcfg.yaml /etc/netplan/01-netcfg.yaml",
-      "sudo netplan apply"
+      "sudo systemctl start consul-template"
     ]
   }
 }

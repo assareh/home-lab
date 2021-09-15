@@ -1,52 +1,36 @@
-job "influxdb" {
+job "internet-monitoring" {
   datacenters = ["dc1"]
 
-  group "influxdb" {
+  group "internet-monitoring" {
     network {
-      port "http" {
-        static = 8086
-        to     = 8086
-      }
+      port "exporter" {}
     }
 
-    volume "influxdb" {
-      type            = "csi"
-      source          = "influxdb"
-      read_only       = false
-      attachment_mode = "file-system"
-      access_mode     = "single-node-writer"
-    }
-
-    task "influxdb" {
+    task "speedtest-exporter" {
       driver = "docker"
 
-      volume_mount {
-        volume      = "influxdb"
-        destination = "/var/lib/influxdb"
-      }
-
       config {
-        image = "influxdb:1.8"
-        ports = ["http"]
+        image = "ghcr.io/miguelndecarvalho/speedtest-exporter:v3.3.2"
+        ports = ["exporter"]
       }
 
       env {
-        TZ = "America/Los_Angeles"
+        SPEEDTEST_PORT = "${NOMAD_PORT_exporter}"
       }
 
       resources {
-        cpu    = 500
-        memory = 1024
+        cpu    = 100
+        memory = 128
       }
 
       service {
-        name = "influxdb"
-        port = "http"
+        name = "prometheus-speedtest-exporter"
+        port = "exporter"
 
         check {
           type     = "http"
-          path     = "/ping"
-          interval = "10s"
+          path     = "/"
+          interval = "5s"
           timeout  = "2s"
 
           check_restart {
@@ -56,11 +40,10 @@ job "influxdb" {
         }
       }
 
-
       scaling "cpu" {
         enabled = true
         min     = 50
-        max     = 1500
+        max     = 500
 
         policy {
           cooldown            = "5m"
@@ -76,8 +59,8 @@ job "influxdb" {
 
       scaling "mem" {
         enabled = true
-        min     = 128
-        max     = 2048
+        min     = 64
+        max     = 512
 
         policy {
           cooldown            = "5m"

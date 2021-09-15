@@ -1,14 +1,14 @@
 # Full configuration options can be found at:
 # https://www.nomadproject.io/docs/commands/volume/create#volume-specification
 
-id           = "unifi"
-name         = "unifi"
+id           = "prometheus"
+name         = "prometheus"
 type         = "csi"
 plugin_id    = "nas"
-capacity_max = "5G"
-capacity_min = "500M"
+capacity_max = "30G"
+capacity_min = "10G"
 
 capability {
-  access_mode     = "multi-node-multi-writer"
+  access_mode     = "single-node-writer"
   attachment_mode = "file-system"
 }

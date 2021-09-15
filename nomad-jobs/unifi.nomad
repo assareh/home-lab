@@ -2,6 +2,10 @@ job "unifi" {
   datacenters = ["dc1"]
 
   group "unifi" {
+    vault {
+      policies = ["pki"]
+    }
+
     volume "unifi" {
       type            = "csi"
       source          = "unifi"
@@ -44,6 +48,9 @@ job "unifi" {
       config {
         image = "jacobalberty/unifi:v6.2.26"
         ports = ["cmdctrl", "https", "stun"]
+        volumes = [
+          "secrets/certs:/unifi/cert",
+        ]
       }
 
       env {
@@ -54,14 +61,22 @@ job "unifi" {
         name = "unifi-cmdctrl"
         port = "cmdctrl"
 
-        # add check
+        check {
+          name     = "service: cmdctrl tcp check"
+          type     = "tcp"
+          interval = "10s"
+          timeout  = "2s"
+
+          check_restart {
+            limit = 3
+            grace = "60s"
+          }
+        }
       }
 
       service {
         name = "unifi-stun"
         port = "stun"
-
-        # add check
       }
 
       service {
@@ -85,8 +100,41 @@ job "unifi" {
           interval = "30s"
           timeout  = "2s"
 
-          tls_skip_verify = true
+          check_restart {
+            limit = 3
+            grace = "60s"
+          }
         }
+      }
+
+      template {
+        destination = "secrets/certs/cert.pem"
+        perms       = "640"
+        data        = <<-EOF
+          {{ $ip_sans := printf "ip_sans=%s" (env "NOMAD_IP_https") }}
+          {{ with secret "pki/intermediate/issue/hashidemos-io" "common_name=unifi.service.consul" "alt_names=unifi.hashidemos.io" $ip_sans }}
+          {{ .Data.certificate }}{{ end }}
+          EOF
+      }
+
+      template {
+        destination = "secrets/certs/privkey.pem"
+        perms       = "400"
+        data        = <<-EOF
+          {{ $ip_sans := printf "ip_sans=%s" (env "NOMAD_IP_https") }}
+          {{ with secret "pki/intermediate/issue/hashidemos-io" "common_name=unifi.service.consul" "alt_names=unifi.hashidemos.io" $ip_sans }}
+          {{ .Data.private_key }}{{ end }}
+          EOF
+      }
+
+      template {
+        destination = "secrets/certs/chain.pem"
+        perms       = "640"
+        data        = <<-EOF
+          {{ $ip_sans := printf "ip_sans=%s" (env "NOMAD_IP_https") }}
+          {{ with secret "pki/intermediate/issue/hashidemos-io" "common_name=unifi.service.consul" "alt_names=unifi.hashidemos.io" $ip_sans }}
+          {{ .Data.issuing_ca }}{{ end }}
+          EOF
       }
 
       resources {

@@ -1,0 +1,43 @@
+{
+  "Node": "esxi",
+  "Address": "192.168.0.6",
+  "NodeMeta": {
+    "external-node": "true",
+    "external-probe": "true"
+  },
+  "Service": {
+    "ID": "esxi",
+    "Service": "esxi",
+    "Port": 443,
+    "Tags": [
+      "dnsmasq.cname=true",
+      "traefik.enable=true",
+      "traefik.http.routers.esxi.entryPoints=websecure",
+      "traefik.http.routers.esxi.rule=Host(`esxi.hashidemos.io`)",
+      "traefik.http.routers.esxi.tls=true",
+      "traefik.http.services.esxi.loadbalancer.server.scheme=https"
+    ]
+  },
+  "Checks": [
+    {
+      "Name": "node: \"esxi\" check",
+      "Node": "esxi",
+      "status": "passing",
+      "Definition": {
+        "tcp": "192.168.0.6:443",
+        "interval": "15s",
+        "timeout": "5s"
+      }
+    },
+    {
+      "Name": "service: \"esxi\" check",
+      "ServiceID": "esxi",
+      "status": "passing",
+      "Definition": {
+        "http": "https://192.168.0.6",
+        "interval": "15s",
+        "timeout": "5s"
+      }
+    }
+  ]
+}

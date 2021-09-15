@@ -86,9 +86,14 @@ build {
   }
 
   provisioner "shell" {
+    environment_vars = [
+      "consul_gossip=${local.consul_gossip}"
+    ]
     inline = [
       "sudo mv /home/${var.ssh_username}/consul.hcl /etc/consul.d/.",
       "sudo mv /home/${var.ssh_username}/nfs.json /etc/consul.d/.",
+      "chmod +x /home/${var.ssh_username}/gossip.sh",
+      "/home/${var.ssh_username}/gossip.sh",
       "sudo chmod 640 /etc/consul.d/*",
       "sudo chown -R consul:consul /etc/consul.d",
       "sudo hostnamectl set-hostname nas",

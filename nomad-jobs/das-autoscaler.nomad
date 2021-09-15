@@ -6,7 +6,7 @@ job "das-autoscaler" {
       driver = "docker"
 
       config {
-        image   = "hashicorp/nomad-autoscaler-enterprise:0.3.2"
+        image   = "hashicorp/nomad-autoscaler-enterprise:0.3.3"
         command = "bin/nomad-autoscaler"
 
         args = [
@@ -100,6 +100,11 @@ EOH
         path     = "/v1/health"
         interval = "5s"
         timeout  = "2s"
+
+        check_restart {
+          limit = 3
+          grace = "60s"
+        }
       }
     }
   }

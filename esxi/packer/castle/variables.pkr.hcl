@@ -1,16 +1,17 @@
 # Read the documentation for locals blocks here:
 # https://www.packer.io/docs/templates/hcl_templates/blocks/locals
 locals {
-  authorized_keys   = vault("/packer/data/ssh", "authorized_keys")
-  consul_license    = vault("/packer/data/licenses", "consul_ent")
-  esxi_password     = vault("/packer/data/esxi", "esxi_password")
-  esxi_username     = vault("/packer/data/esxi", "esxi_username")
-  nomad_license     = vault("/packer/data/licenses", "nomad_ent")
-  nomad_vault_token = vault("/packer/data/nomad", "vault_token")
-  ssh_password      = vault("/packer/data/ubuntu", "castle")
-  timestamp         = regex_replace(timestamp(), "[- TZ:]", "")
-  vault_license     = vault("/packer/data/licenses", "vault_ent")
-  vm_name           = "Castle-${local.timestamp}"
+  authorized_keys = vault("/packer/data/ssh", "authorized_keys")
+  consul_gossip   = vault("/packer/data/consul", "gossip")
+  consul_license  = vault("/packer/data/consul", "license")
+  esxi_password   = vault("/packer/data/esxi", "esxi_password")
+  esxi_username   = vault("/packer/data/esxi", "esxi_username")
+  nomad_gossip    = vault("/packer/data/nomad", "gossip")
+  nomad_license   = vault("/packer/data/nomad", "license")
+  ssh_password    = vault("/packer/data/ubuntu", "castle")
+  timestamp       = regex_replace(timestamp(), "[- TZ:]", "")
+  vault_license   = vault("/packer/data/vault", "license")
+  vm_name         = "Castle-${local.timestamp}"
 }
 
 # All generated input variables will be of 'string' type as this is how Packer JSON

@@ -1,31 +1,22 @@
-job "speedtest" {
+job "prometheus-esxi-exporter" {
   datacenters = ["dc1"]
 
-  group "speedtest" {
+  group "prometheus-esxi-exporter" {
     network {
-      port "http" {
-        static = 8001
-        to     = 80
+      port "exporter" {
+        static = 9512
+        to     = 9512
       }
     }
 
     service {
-      name = "speedtest"
-      port = "http"
-
-      tags = [
-        "dnsmasq.cname=true",
-        "traefik.enable=true",
-        "traefik.http.routers.speedtest.entryPoints=websecure",
-        "traefik.http.routers.speedtest.rule=Host(`speedtest.hashidemos.io`)",
-        "traefik.http.routers.speedtest.tls=true",
-      ]
+      name = "prometheus-esxi-exporter"
+      port = "exporter"
 
       check {
         type     = "http"
-        port     = "http"
         path     = "/"
-        interval = "15s"
+        interval = "5s"
         timeout  = "2s"
 
         check_restart {
@@ -35,17 +26,27 @@ job "speedtest" {
       }
     }
 
-    task "speedtest" {
+    vault {
+      policies = ["prometheus"]
+    }
+
+    task "prometheus-esxi-exporter" {
       driver = "docker"
 
       config {
-        image = "adolfintel/speedtest:5.2.4"
-        ports = ["http"]
+        image = "devinotelecom/prometheus-vmware-exporter"
+        ports = ["exporter"]
+      }
+
+      env {
+        ESX_HOST     = "192.168.10.6"
+        ESX_USERNAME = "prometheus"
+        ESX_LOG      = "debug"
       }
 
       resources {
-        cpu    = 57
-        memory = 66
+        cpu    = 100
+        memory = 128
       }
 
       scaling "cpu" {
@@ -78,6 +79,15 @@ job "speedtest" {
             strategy "app-sizing-max" {}
           }
         }
+      }
+
+      template {
+        data = <<EOH
+                   ESX_PASSWORD="{{with secret "nomad/data/prometheus"}}{{.Data.data.ESX_PASSWORD}}{{end}}"
+                   EOH
+
+        destination = "secrets/config.env"
+        env         = true
       }
     }
   }
