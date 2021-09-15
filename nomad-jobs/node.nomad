@@ -32,6 +32,37 @@ job "storage-node" {
         memory = 256
       }
 
+      scaling "cpu" {
+        enabled = true
+        min     = 50
+        max     = 1000
+
+        policy {
+          cooldown            = "5m"
+          evaluation_interval = "30s"
+
+          check "95pct" {
+            strategy "app-sizing-percentile" {
+              percentile = "95"
+            }
+          }
+        }
+      }
+
+      scaling "mem" {
+        enabled = true
+        min     = 64
+        max     = 512
+
+        policy {
+          cooldown            = "5m"
+          evaluation_interval = "30s"
+
+          check "max" {
+            strategy "app-sizing-max" {}
+          }
+        }
+      }
     }
   }
 }

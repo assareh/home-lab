@@ -144,8 +144,7 @@ build {
     environment_vars = [
       "consul_license=${local.consul_license}",
       "nomad_license=${local.nomad_license}",
-      "vault_license=${local.vault_license}",
-      "nomad_vault_token=${local.nomad_vault_token}"
+      "vault_license=${local.vault_license}"
     ]
     inline = [
       "touch /home/${var.ssh_username}/consul.hclic",
@@ -163,10 +162,16 @@ build {
   }
 
   provisioner "shell" {
+    environment_vars = [
+      "consul_gossip=${local.consul_gossip}",
+      "nomad_gossip=${local.nomad_gossip}"
+    ]
     inline = [
       "sudo mv /home/${var.ssh_username}/consul.hcl /etc/consul.d/.",
-      "sudo chown -R consul:consul /etc/consul.d",
       "sudo mv /home/${var.ssh_username}/nomad.hcl /etc/nomad.d/.",
+      "chmod +x /home/${var.ssh_username}/gossip.sh",
+      "/home/${var.ssh_username}/gossip.sh",
+      "sudo chown -R consul:consul /etc/consul.d",
       "sudo chown -R nomad:nomad /etc/nomad.d",
       "sudo chmod 640 /etc/consul.d/* /etc/nomad.d/*"
     ]

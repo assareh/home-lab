@@ -1,11 +1,6 @@
 job "grafana" {
   datacenters = ["dc1"]
 
-  constraint {
-    attribute = "${attr.kernel.name}"
-    value     = "linux"
-  }
-
   group "grafana" {
     network {
       port "http" {}
@@ -51,11 +46,6 @@ job "grafana" {
         GF_SERVER_HTTP_PORT = "${NOMAD_PORT_http}"
       }
 
-      artifact {
-        source      = "git::https://gitlab.hashidemos.io/grafana-dashboards"
-        destination = "local/dashboards"
-      }
-
       resources {
         cpu    = 1000
         memory = 256
@@ -80,9 +70,8 @@ job "grafana" {
           timeout  = "2s"
 
           check_restart {
-            limit           = 2
-            grace           = "60s"
-            ignore_warnings = false
+            limit = 3
+            grace = "60s"
           }
         }
       }

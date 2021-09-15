@@ -9,15 +9,35 @@ job "prometheus" {
       }
     }
 
+    volume "prometheus" {
+      type            = "csi"
+      source          = "prometheus"
+      read_only       = false
+      attachment_mode = "file-system"
+      access_mode     = "single-node-writer"
+    }
+
     task "prometheus" {
       driver = "docker"
 
+      volume_mount {
+        volume      = "prometheus"
+        destination = "/prometheus"
+      }
+
+      artifact {
+        source      = "https://raw.githubusercontent.com/geerlingguy/internet-pi/master/internet-monitoring/prometheus/alert.rules"
+        destination = "local/config/"
+      }
+
       config {
-        image = "prom/prometheus:v2.18.1"
+        image = "prom/prometheus:v2.29.2"
 
         args = [
           "--config.file=/etc/prometheus/config/prometheus.yml",
           "--storage.tsdb.path=/prometheus",
+          "--storage.tsdb.retention=90d",
+          "--storage.tsdb.retention.size=30GB",
           "--web.console.libraries=/usr/share/prometheus/console_libraries",
           "--web.console.templates=/usr/share/prometheus/consoles",
         ]
@@ -33,23 +53,66 @@ job "prometheus" {
         data = <<EOH
 ---
 global:
-  scrape_interval:     1s
-  evaluation_interval: 1s
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+  external_labels:
+    monitor: 'Alertmanager'
+
+rule_files:
+  - 'alert.rules'
 
 scrape_configs:
+  - job_name: 'prometheus'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['localhost:9090']
+
   - job_name: nomad
-    metrics_path: /v1/metrics
+    metrics_path: '/v1/metrics'
     params:
       format: ['prometheus']
     static_configs:
-    - targets: ['{{ env "attr.unique.network.ip-address" }}:4646']
+    - targets:
+        [
+          '{{ with service "nomad-client" }}{{ with index . 0 }}{{.Address}}:{{.Port}}{{ end }}{{ end }}'
+        ]
 
   - job_name: consul
-    metrics_path: /v1/agent/metrics
+    metrics_path: '/v1/agent/metrics'
     params:
       format: ['prometheus']
     static_configs:
-    - targets: ['{{ env "attr.unique.network.ip-address" }}:8500']
+    - targets: 
+        [
+          '{{ with service "consul" }}{{ with index . 0 }}{{.Address}}{{ end }}{{ end }}:8500'
+        ]
+
+  - job_name: 'edinburgh'
+    metrics_path: '/metrics'
+    static_configs:
+    - targets: 
+        [
+          '{{ with service "prometheus-esxi-exporter" }}{{ with index . 0 }}{{.Address}}:{{.Port}}{{ end }}{{ end }}'
+        ]
+      labels:
+        alias: edinburgh
+
+  - job_name: 'pihole'
+    static_configs:
+    - targets: 
+        [
+          '{{ with service "prometheus-pihole-exporter" }}{{ with index . 0 }}{{.Address}}:{{.Port}}{{ end }}{{ end }}'
+        ]
+
+  - job_name: 'speedtest-exporter'
+    scrape_interval: 1h
+    scrape_timeout: 1m
+    static_configs:
+    - targets: 
+        [
+          '{{ with service "prometheus-speedtest-exporter" }}{{ with index . 0 }}{{.Address}}:{{.Port}}{{ end }}{{ end }}'
+        ]
 EOH
 
         change_mode   = "signal"
@@ -103,6 +166,11 @@ EOH
           path     = "/-/healthy"
           interval = "10s"
           timeout  = "2s"
+
+          check_restart {
+            limit = 3
+            grace = "60s"
+          }
         }
       }
     }

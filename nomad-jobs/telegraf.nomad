@@ -2,11 +2,6 @@ job "telegraf" {
   datacenters = ["dc1"]
   type        = "system"
 
-  constraint {
-    attribute = "${attr.kernel.name}"
-    value     = "linux"
-  }
-
   group "telegraf" {
     task "telegraf" {
       driver = "docker"
@@ -28,13 +23,8 @@ job "telegraf" {
 # Accepts statsd connections on port 8125.
 # Sends output to InfluxDB at http://influxdb.service.consul:8086.
 
-# Adding Client class
-# This should be here until https://github.com/hashicorp/nomad/pull/3882 is merged
-{{ $node_class := env "node.class" }}
-[global_tags]{{ if $node_class }}
-  nomad_client_class = "{{ env "node.class" }}"{{else}}
-  nomad_client_class = "none"{{ end }}
-  role = "consul-server"
+[global_tags]
+  role = "castle"
   datacenter = "dc1"
 
 [agent]
@@ -44,24 +34,25 @@ job "telegraf" {
   metric_buffer_limit = 10000
   collection_jitter = "0s"
   flush_interval = "10s"
-  flush_jitter = "3s"
+  flush_jitter = "0s"
   precision = ""
   debug = false
   quiet = false
+  logfile = ""
   hostname = ""
   omit_hostname = false
 
 [[outputs.influxdb]]
-  urls = ["http://influxdb.service.consul:8086"]
-  database = "telegraf"
-  retention_policy = "autogen"
+  urls = ["http://influxdb.service.consul:8086"] # required
+  database = "telegraf" # required
+  retention_policy = ""
+  write_consistency = "any"
   timeout = "5s"
   username = "telegraf"
   password = "telegraf"
-  user_agent = "telegraf-{{env "NOMAD_TASK_NAME" }}"
 
 [[inputs.consul]]
-  address = "{{ env "attr.unique.network.ip-address" }}:8500"
+  address = "localhost:8500"
   scheme = "http"
 
 [[inputs.cpu]]
@@ -87,7 +78,7 @@ job "telegraf" {
   # no configuration
 
 [[inputs.net]]
-  interfaces = ["ens*"]
+  interfaces = ["en*"]
 
 [[inputs.netstat]]
   # no configuration
@@ -97,9 +88,6 @@ job "telegraf" {
 
 [[inputs.procstat]]
   pattern = "(consul|vault)"
-
-[[inputs.prometheus]]
-  urls = ["http://{{ env "attr.unique.network.ip-address" }}:4646/v1/metrics?format=prometheus"]
 
 [[inputs.swap]]
   # no configuration

@@ -17,8 +17,8 @@ job "splunk" {
       }
 
       port "syslog" {
-        static = 8514
-        to     = 8514
+        static = 514
+        to     = 514
       }
     }
 
@@ -87,6 +87,11 @@ EOF
           path     = "/"
           interval = "10s"
           timeout  = "2s"
+
+          check_restart {
+            limit = 3
+            grace = "60s"
+          }
         }
       }
 
@@ -98,6 +103,11 @@ EOF
           type     = "tcp"
           interval = "10s"
           timeout  = "2s"
+
+          check_restart {
+            limit = 3
+            grace = "60s"
+          }
         }
       }
 

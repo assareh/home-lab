@@ -2,7 +2,7 @@ job "pihole" {
   datacenters = ["dc1"]
 
   group "pihole" {
-    count = 2
+    count = 2 # for continuous availability as template changes
 
     vault {
       policies = ["pihole"]
@@ -25,7 +25,9 @@ job "pihole" {
     network {
       port "cloudflared" {}
 
-      port "metrics" {}
+      port "cloudflared_metrics" {}
+
+      port "pihole_exporter" {}
 
       port "http" {
         to = 80
@@ -49,7 +51,7 @@ job "pihole" {
           "--port",
           "${NOMAD_PORT_cloudflared}",
           "--metrics",
-          "127.0.0.1:${NOMAD_PORT_metrics}",
+          "127.0.0.1:${NOMAD_PORT_cloudflared_metrics}",
           "--upstream",
           "https://1.1.1.1/dns-query",
           "--upstream",
@@ -77,9 +79,8 @@ job "pihole" {
           timeout  = "2s"
 
           check_restart {
-            limit           = 3
-            grace           = "90s"
-            ignore_warnings = false
+            limit = 3
+            grace = "60s"
           }
         }
       }
@@ -112,6 +113,85 @@ job "pihole" {
 
           check "max" {
             strategy "app-sizing-max" {}
+          }
+        }
+      }
+    }
+
+    task "prometheus-pihole-exporter" {
+      driver = "docker"
+
+      config {
+        image = "ekofr/pihole-exporter:v0.0.11"
+        ports = ["pihole_exporter"]
+      }
+
+      env {
+        INTERVAL        = "30s"
+        PIHOLE_HOSTNAME = "${NOMAD_IP_http}"
+        PIHOLE_PORT     = "${NOMAD_HOST_PORT_http}"
+        PORT            = "${NOMAD_PORT_pihole_exporter}"
+      }
+
+      resources {
+        cpu    = 100
+        memory = 128
+      }
+
+      scaling "cpu" {
+        enabled = true
+        min     = 50
+        max     = 500
+
+        policy {
+          cooldown            = "5m"
+          evaluation_interval = "30s"
+
+          check "95pct" {
+            strategy "app-sizing-percentile" {
+              percentile = "95"
+            }
+          }
+        }
+      }
+
+      scaling "mem" {
+        enabled = true
+        min     = 64
+        max     = 512
+
+        policy {
+          cooldown            = "5m"
+          evaluation_interval = "30s"
+
+          check "max" {
+            strategy "app-sizing-max" {}
+          }
+        }
+      }
+
+      template {
+        destination = "secrets/pihole.env"
+        env         = true
+
+        data = <<EOF
+PIHOLE_API_TOKEN="{{with secret "nomad/data/pihole"}}{{.Data.data.WEBPASSWORD}}{{end}}"
+EOF
+      }
+
+      service {
+        name = "prometheus-pihole-exporter"
+        port = "pihole_exporter"
+
+        check {
+          type     = "http"
+          path     = "/metrics"
+          interval = "5s"
+          timeout  = "2s"
+
+          check_restart {
+            limit = 3
+            grace = "60s"
           }
         }
       }
@@ -150,7 +230,7 @@ EOF
       }
 
       resources {
-        cpu    = 1494
+        cpu    = 500
         memory = 128
       }
 
@@ -165,7 +245,7 @@ server=/consul/{{.Address}}#8600{{end}}
 # Local records
 # the next line is temporary and will be removed soon once esxi has service registration
 address=/esxi.hashidemos.io/192.168.10.6
-#
+# 
 cname=traefik.hashidemos.io,traefik.service.consul
 cname=pihole.hashidemos.io,traefik.service.consul
 {{range $tag, $services := services | byTag}}{{ if eq $tag "dnsmasq.cname=true" }}{{range $services}}
@@ -177,7 +257,7 @@ EOF
         destination = "local/pihole/pihole-FTL.conf"
 
         data = <<EOF
-PRIVACYLEVEL=3
+PRIVACYLEVEL=0
 EOF
       }
 
@@ -192,7 +272,7 @@ set -uo pipefail
 
 nc -zuv $1 $2
 
-# Exit code 1 from netcat denotes a failure in network connectivity. We wrap this and send an exit code above 1,
+# Exit code 1 from netcat denotes a failure in network connectivity. We wrap this and send an exit code above 1, 
 # say 2, because, consul's script check considers exit code 1 as a WARNING and exit code 0 as a SUCCESS and anything
 # other than that is considered a FAILURE.
 if [[ "$?" != "0" ]]; then
@@ -217,6 +297,11 @@ EOF
           path     = "/admin/"
           interval = "10s"
           timeout  = "2s"
+
+          check_restart {
+            limit = 3
+            grace = "60s"
+          }
         }
       }
 
@@ -228,9 +313,14 @@ EOF
           name     = "service: dns udp check"
           type     = "script"
           command  = "/local/consul-udp-check"
-          args     = ["localhost", "53"]
+          args     = ["localhost", "${NOMAD_PORT_dns}"]
           interval = "15s"
           timeout  = "5s"
+
+          check_restart {
+            limit = 3
+            grace = "60s"
+          }
         }
 
         check {
@@ -238,6 +328,11 @@ EOF
           type     = "tcp"
           interval = "10s"
           timeout  = "2s"
+
+          check_restart {
+            limit = 3
+            grace = "60s"
+          }
         }
 
         check {
@@ -247,6 +342,11 @@ EOF
           args     = ["@127.0.0.1", "cloudflare.com"]
           interval = "30s"
           timeout  = "5s"
+
+          check_restart {
+            limit = 3
+            grace = "60s"
+          }
         }
       }
 

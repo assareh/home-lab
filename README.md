@@ -45,6 +45,9 @@ There is a little bit of chicken and egg here. One of the original requirements 
 
 Docs: https://learn.hashicorp.com/tutorials/consul/dns-forwarding
 
+#### Security/Privacy
+DNS over TLS to Google is used in the [Unbound configuration](./esxi/packer/castle/files/unbound.conf#L65) on the Castle nodes. DNS over HTTPS to Cloudflare is used in the [Pi-hole configuration](./nomad-jobs/pi-hole.nomad).
+
 #### Futures
 - When looking to improve this I'd like to eliminate the need for a separate proxy.
 - Watching [#7430](https://github.com/traefik/traefik/issues/7430) for Traefik UDP fix
@@ -54,6 +57,16 @@ In a cloud environment we would have capabilities like cloud auto join to enable
 
 ### Upgrades
 In a cloud environment we would have primitives like auto scaling groups that faciliate dynamic infrastructure and make immutable upgrades effortless. Since we don't exactly have this capability available in the home lab I use a blue green approach for upgrades. We designate three blue nodes and three green nodes. We begin by provisioning the "blue" nodes. When it comes time for an upgrade, we update our base images and provision the "green" nodes. Once we've verified the green nodes are healthy, we drain the blue nodes and destroy them, leaving just the new green nodes. If something goes wrong or there is a problem with the upgrade we still have our original blue nodes. We can remove the green nodes and try again. Repeat.
+
+### Telemetry and Monitoring
+
+![](https://learn.hashicorp.com/img/vault_cluster.png)
+
+These guides serve as a great starting point and are what I have followed:
+- [Vault Cluster Monitoring](https://learn.hashicorp.com/tutorials/vault/monitoring) (specifically the [PDF](https://hashicorp-education.s3-us-west-2.amazonaws.com/whitepapers/Vault/Vault-Consul-Monitoring-Guide.pdf))
+- [Monitor Consul Datacenter Health with Telegraf](https://learn.hashicorp.com/tutorials/consul/monitor-health-telegraf?in=consul/day-2-operations)
+
+There are additional details in the [nomad-jobs README](./nomad-jobs/README.md#grafana).
 
 ### Certificates
 If you would like to avoid repeated certificate warnings in your browser and elsewhere, you can build your own certificate authority and add the root certificate to the trust store on your machines. Once you’ve done that Vault can issue trusted certificates for other hosts or applications, like your ESXi host for example. Later when configuring Traefik you can provide it with a wildcard certificate from Vault or configure the Traefik's Let’s Encrypt provider to obtain a publicly trusted certificate.
@@ -146,8 +159,10 @@ EOF
 Here is how to create the bootstrap role:
 ```
 vault write auth/approle/role/bootstrap \
+  secret_id_bound_cidrs="192.168.0.101/32","192.168.0.102/31","192.168.0.104/31","192.168.0.106/32" \
   secret_id_num_uses=1 \
   secret_id_ttl=420s \
+  token_bound_cidrs="192.168.0.101/32","192.168.0.102/31","192.168.0.104/31","192.168.0.106/32" \
   token_period=259200 \
   token_policies="pki,gcp-kms,nomad-server"
 ```

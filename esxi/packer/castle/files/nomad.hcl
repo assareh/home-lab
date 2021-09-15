@@ -16,12 +16,12 @@ advertise {
 
 autopilot {
   cleanup_dead_servers      = true
+  disable_upgrade_migration = false
+  enable_custom_upgrades    = true
+  enable_redundancy_zones   = false
   last_contact_threshold    = "200ms"
   max_trailing_logs         = 250
   server_stabilization_time = "10s"
-  enable_redundancy_zones   = false
-  disable_upgrade_migration = false
-  enable_custom_upgrades    = true
 }
 
 client {
@@ -55,18 +55,20 @@ plugin "raw_exec" {
 
 server {
   enabled          = true
-  license_path     = "/etc/nomad.d/license.hclic"
   bootstrap_expect = 3
+  encrypt          = ""
+  license_path     = "/etc/nomad.d/license.hclic"
   raft_protocol    = 3
   upgrade_version  = "0.0.0"
 }
 
 telemetry {
+  datadog_address            = "localhost:8125"
+  datadog_tags               = ["role:castle"]
   disable_hostname           = true
+  prometheus_metrics         = true
   publish_allocation_metrics = true
   publish_node_metrics       = true
-  prometheus_metrics         = true
-  statsd_address             = "localhost:8125"
 }
 
 vault {
