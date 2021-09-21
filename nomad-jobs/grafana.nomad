@@ -47,8 +47,8 @@ job "grafana" {
       }
 
       resources {
-        cpu    = 1000
-        memory = 256
+        cpu    = 57
+        memory = 46
       }
 
       service {
@@ -67,7 +67,7 @@ job "grafana" {
           type     = "http"
           path     = "/api/health"
           interval = "10s"
-          timeout  = "2s"
+          timeout  = "31s"
 
           check_restart {
             limit = 3
@@ -78,12 +78,11 @@ job "grafana" {
 
       scaling "cpu" {
         enabled = true
-        min     = 50
         max     = 1500
 
         policy {
-          cooldown            = "5m"
-          evaluation_interval = "30s"
+          cooldown            = "24h"
+          evaluation_interval = "24h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -95,12 +94,11 @@ job "grafana" {
 
       scaling "mem" {
         enabled = true
-        min     = 128
         max     = 2048
 
         policy {
-          cooldown            = "5m"
-          evaluation_interval = "30s"
+          cooldown            = "24h"
+          evaluation_interval = "24h"
 
           check "max" {
             strategy "app-sizing-max" {}

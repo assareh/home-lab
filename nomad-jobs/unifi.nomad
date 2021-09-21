@@ -46,7 +46,7 @@ job "unifi" {
       }
 
       config {
-        image = "jacobalberty/unifi:v6.2.26"
+        image = "jacobalberty/unifi:v6.4.54"
         ports = ["cmdctrl", "https", "stun"]
         volumes = [
           "secrets/certs:/unifi/cert",
@@ -65,7 +65,7 @@ job "unifi" {
           name     = "service: cmdctrl tcp check"
           type     = "tcp"
           interval = "10s"
-          timeout  = "2s"
+          timeout  = "31s"
 
           check_restart {
             limit = 3
@@ -97,8 +97,8 @@ job "unifi" {
           port     = "https"
           protocol = "https"
           path     = "/status"
-          interval = "30s"
-          timeout  = "2s"
+          interval = "10s"
+          timeout  = "31s"
 
           check_restart {
             limit = 3
@@ -138,18 +138,17 @@ job "unifi" {
       }
 
       resources {
-        cpu    = 500
-        memory = 1024
+        cpu    = 172
+        memory = 1026
       }
 
       scaling "cpu" {
         enabled = true
-        min     = 50
         max     = 2000
 
         policy {
-          cooldown            = "5m"
-          evaluation_interval = "30s"
+          cooldown            = "24h"
+          evaluation_interval = "24h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -161,12 +160,11 @@ job "unifi" {
 
       scaling "mem" {
         enabled = true
-        min     = 128
         max     = 2048
 
         policy {
-          cooldown            = "5m"
-          evaluation_interval = "30s"
+          cooldown            = "24h"
+          evaluation_interval = "24h"
 
           check "max" {
             strategy "app-sizing-max" {}

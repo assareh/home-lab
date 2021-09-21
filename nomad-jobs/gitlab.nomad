@@ -80,7 +80,7 @@ job "gitlab" {
           name     = "service: gitlab tcp check"
           type     = "tcp"
           interval = "10s"
-          timeout  = "2s"
+          timeout  = "31s"
 
           check_restart {
             limit = 3
@@ -91,8 +91,8 @@ job "gitlab" {
         check {
           name     = "service: gitlab readiness check"
           type     = "http"
-          interval = "30s"
-          timeout  = "5s"
+          interval = "10s"
+          timeout  = "31s"
           path     = "/-/readiness?token="
           protocol = "https"
 
@@ -105,8 +105,8 @@ job "gitlab" {
         check {
           name     = "service: gitlab liveness check"
           type     = "http"
-          interval = "30s"
-          timeout  = "5s"
+          interval = "10s"
+          timeout  = "31s"
           path     = "/-/liveness?token="
           protocol = "https"
 
@@ -140,18 +140,17 @@ job "gitlab" {
       }
 
       resources {
-        cpu    = 1609
+        cpu    = 1494
         memory = 4096
       }
 
       scaling "cpu" {
         enabled = true
-        min     = 50
         max     = 4000
 
         policy {
-          cooldown            = "5m"
-          evaluation_interval = "30s"
+          cooldown            = "24h"
+          evaluation_interval = "24h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -163,12 +162,11 @@ job "gitlab" {
 
       scaling "mem" {
         enabled = true
-        min     = 2048
         max     = 4096
 
         policy {
-          cooldown            = "5m"
-          evaluation_interval = "30s"
+          cooldown            = "24h"
+          evaluation_interval = "24h"
 
           check "max" {
             strategy "app-sizing-max" {}

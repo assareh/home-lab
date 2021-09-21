@@ -144,19 +144,3 @@ resource "esxi_virtual_disk" "nas_disk2" {
   virtual_disk_size       = var.nas_disk_size
   virtual_disk_type       = "thin"
 }
-
-resource "esxi_guest" "moat" {
-  guest_name    = lookup(var.node_moat, "name")
-  disk_store    = var.esxi_datastore
-  clone_from_vm = var.template_moat
-  power         = "on"
-
-  dynamic "network_interfaces" {
-    for_each = lookup(var.node_moat, "network_interfaces")
-    content {
-      mac_address     = network_interfaces.value.mac_address
-      nic_type        = "vmxnet3"
-      virtual_network = network_interfaces.value.virtual_network
-    }
-  }
-}

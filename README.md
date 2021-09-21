@@ -17,7 +17,6 @@ The high level architecture is VMs on ESXi running on an [Intel NUC](https://www
 
 - Castle nodes are Nomad/Consul/Vault servers
 - NAS provides an NFS volume for persistent storage
-- Moat provides an L4 UDP proxy to be used as a primary LDNS
 
 ### Hypervisor
 I selected ESXi as the hypervisor due to its widespread popularity and compatibility. I originally began with ESXi 6.7 but am now on 7.0 Update 1.
@@ -41,15 +40,12 @@ Some of the applications that will be run in this environment require persistent
 There are Consul and Nomad snapshot agents running that periodically save Consul and Nomad cluster snapshots. Additionally with Vault Enterprise, one could establish a Disaster Recovery cluster on another machine that would contain a complete copy of the Vault cluster data and configuration.
 
 ### DNS
-There is a little bit of chicken and egg here. One of the original requirements for this project was to provide a primary LDNS for my home network. That will be accomplished with [Pi-hole](https://pi-hole.net) running on Nomad. However the Castle nodes themselves need DNS resolution in order to reach each other and the internet. To accomplish that I am running [Unbound](https://www.nlnetlabs.nl/projects/unbound/about/) on each host so they have stable DNS resolvers. Since Unbound uses UDP 53 on each Castle node, Pi-hole is run on dynamically assigned ports. Therefore the Moat proxy instance serves as the DNS1 listener. It provides a stable IP for clients to address. NGINX and Consul Template are used to keep its configuration up to date. 
-
-Docs: https://learn.hashicorp.com/tutorials/consul/dns-forwarding
+One of the original requirements for this project was to provide a primary LDNS for my home network. That is accomplished with [Pi-hole](https://pi-hole.net) running on Nomad. In the Pi-hole job, [Keepalived](https://www.keepalived.org) is used to provide a floating VIP (virtual address). My secondary LDNS is my home router. I've configured it per the [Forward DNS for Consul Service Discovery](https://learn.hashicorp.com/tutorials/consul/dns-forwarding) tutorial so it can resolve queries for .consul as well. 
 
 #### Security/Privacy
-DNS over TLS to Google is used in the [Unbound configuration](./esxi/packer/castle/files/unbound.conf#L65) on the Castle nodes. DNS over HTTPS to Cloudflare is used in the [Pi-hole configuration](./nomad-jobs/pi-hole.nomad).
+DNS over HTTPS to Cloudflare is used in the [Pi-hole configuration](./nomad-jobs/pi-hole.nomad).
 
 #### Futures
-- When looking to improve this I'd like to eliminate the need for a separate proxy.
 - Watching [#7430](https://github.com/traefik/traefik/issues/7430) for Traefik UDP fix
 
 ### IPAM

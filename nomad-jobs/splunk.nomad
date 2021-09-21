@@ -86,7 +86,7 @@ EOF
           type     = "http"
           path     = "/"
           interval = "10s"
-          timeout  = "2s"
+          timeout  = "31s"
 
           check_restart {
             limit = 3
@@ -102,7 +102,7 @@ EOF
         check {
           type     = "tcp"
           interval = "10s"
-          timeout  = "2s"
+          timeout  = "31s"
 
           check_restart {
             limit = 3
@@ -118,18 +118,17 @@ EOF
       }
 
       resources {
-        cpu    = 517
+        cpu    = 287
         memory = 1024
       }
 
       scaling "cpu" {
         enabled = true
-        min     = 50
         max     = 2000
 
         policy {
-          cooldown            = "5m"
-          evaluation_interval = "30s"
+          cooldown            = "24h"
+          evaluation_interval = "24h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -141,12 +140,11 @@ EOF
 
       scaling "mem" {
         enabled = true
-        min     = 128
         max     = 1024
 
         policy {
-          cooldown            = "5m"
-          evaluation_interval = "30s"
+          cooldown            = "24h"
+          evaluation_interval = "24h"
 
           check "max" {
             strategy "app-sizing-max" {}

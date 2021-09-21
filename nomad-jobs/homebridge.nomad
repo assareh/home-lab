@@ -30,8 +30,13 @@ job "homebridge" {
         type     = "http"
         port     = "http"
         path     = "/"
-        interval = "15s"
-        timeout  = "2s"
+        interval = "10s"
+        timeout  = "31s"
+
+        check_restart {
+          limit = 3
+          grace = "60s"
+        }
       }
     }
 
@@ -112,12 +117,11 @@ EOF
 
       scaling "cpu" {
         enabled = true
-        min     = 50
         max     = 2000
 
         policy {
-          cooldown            = "5m"
-          evaluation_interval = "30s"
+          cooldown            = "24h"
+          evaluation_interval = "24h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -129,12 +133,11 @@ EOF
 
       scaling "mem" {
         enabled = true
-        min     = 128
         max     = 1024
 
         policy {
-          cooldown            = "5m"
-          evaluation_interval = "30s"
+          cooldown            = "24h"
+          evaluation_interval = "24h"
 
           check "max" {
             strategy "app-sizing-max" {}

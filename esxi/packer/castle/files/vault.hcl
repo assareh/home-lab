@@ -1,3 +1,5 @@
+cluster_name = "castle"
+
 ui = true
 
 max_lease_ttl = "8760h"

@@ -23,7 +23,7 @@ locals {
 # https://www.packer.io/docs/templates/hcl_templates/blocks/variable
 variable "cni_version" {
   type    = string
-  default = "0.9.1"
+  default = "1.0.1"
 }
 
 variable "consul_version" {
@@ -33,7 +33,7 @@ variable "consul_version" {
 
 variable "containerd_version" {
   type    = string
-  default = "0.8"
+  default = "0.9.2"
 }
 
 variable "esxi_host" {

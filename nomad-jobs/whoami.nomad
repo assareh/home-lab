@@ -32,7 +32,7 @@ job "whoami" {
         path     = "/health"
         port     = "web"
         interval = "10s"
-        timeout  = "2s"
+        timeout  = "31s"
       }
     }
 

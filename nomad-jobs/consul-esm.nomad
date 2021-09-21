@@ -19,18 +19,17 @@ job "consul-esm" {
       }
 
       resources {
-        cpu    = 100
-        memory = 128
+        cpu    = 57
+        memory = 11
       }
 
       scaling "cpu" {
         enabled = true
-        min     = 50
         max     = 500
 
         policy {
-          cooldown            = "5m"
-          evaluation_interval = "30s"
+          cooldown            = "24h"
+          evaluation_interval = "24h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -42,12 +41,11 @@ job "consul-esm" {
 
       scaling "mem" {
         enabled = true
-        min     = 64
         max     = 512
 
         policy {
-          cooldown            = "5m"
-          evaluation_interval = "30s"
+          cooldown            = "24h"
+          evaluation_interval = "24h"
 
           check "max" {
             strategy "app-sizing-max" {}
