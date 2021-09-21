@@ -13,10 +13,10 @@ Often I would make some change to the environment and forget what I did or why I
 ## Architecture
 The high level architecture is VMs on ESXi running on an [Intel NUC](https://www.intel.com/content/www/us/en/products/details/nuc.html).
 
-![](./architecture.png)
-
 - Castle nodes are Nomad/Consul/Vault servers
 - NAS provides an NFS volume for persistent storage
+
+![](./architecture.png)
 
 ### Hypervisor
 I selected ESXi as the hypervisor due to its widespread popularity and compatibility. I originally began with ESXi 6.7 but am now on 7.0 Update 1.
