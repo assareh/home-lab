@@ -1,7 +1,7 @@
-# need to update to system job - logs be unique per node as in access log is node.name.log
 job "traefik" {
   datacenters = ["dc1"]
-  type        = "service"
+
+  priority = 85
 
   group "traefik" {
     vault {
@@ -16,6 +16,13 @@ job "traefik" {
       access_mode     = "multi-node-multi-writer"
     }
 
+    restart {
+      attempts = 2
+      interval = "5m"
+      delay    = "15s"
+      mode     = "fail"
+    }
+
     update {
       auto_revert  = true
       auto_promote = true
@@ -23,7 +30,7 @@ job "traefik" {
       stagger      = "60s"
     }
 
-    network {
+    network { # should put any ports that are entrypoints below here
       port "https" {
         static = 443
       }
@@ -56,7 +63,7 @@ job "traefik" {
         type     = "tcp"
         port     = "api"
         interval = "10s"
-        timeout  = "2s"
+        timeout  = "31s"
 
         check_restart {
           limit = 3
@@ -74,7 +81,7 @@ job "traefik" {
         type     = "tcp"
         port     = "http"
         interval = "10s"
-        timeout  = "2s"
+        timeout  = "31s"
 
         check_restart {
           limit = 3
@@ -92,7 +99,7 @@ job "traefik" {
         type     = "tcp"
         port     = "https"
         interval = "10s"
-        timeout  = "2s"
+        timeout  = "31s"
 
         check_restart {
           limit = 3
@@ -106,9 +113,10 @@ job "traefik" {
 
       env {
         KEEPALIVED_INTERFACE     = "ens160"
-        KEEPALIVED_VIRTUAL_IPS   = "192.168.0.200"
+        KEEPALIVED_ROUTER_ID     = "52"
         KEEPALIVED_STATE         = "BACKUP"
         KEEPALIVED_UNICAST_PEERS = ""
+        KEEPALIVED_VIRTUAL_IPS   = "192.168.0.200"
       }
 
       config {
@@ -122,18 +130,17 @@ job "traefik" {
       }
 
       resources {
-        cpu    = 100
-        memory = 128
+        cpu    = 57
+        memory = 11
       }
 
       scaling "cpu" {
         enabled = true
-        min     = 50
         max     = 500
 
         policy {
-          cooldown            = "5m"
-          evaluation_interval = "30s"
+          cooldown            = "24h"
+          evaluation_interval = "24h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -145,12 +152,11 @@ job "traefik" {
 
       scaling "mem" {
         enabled = true
-        min     = 128
         max     = 512
 
         policy {
-          cooldown            = "5m"
-          evaluation_interval = "30s"
+          cooldown            = "24h"
+          evaluation_interval = "24h"
 
           check "max" {
             strategy "app-sizing-max" {}
@@ -185,14 +191,14 @@ job "traefik" {
       template {
         data = <<EOF
 [accessLog]
-  filePath = "/opt/traefik/access.log"
+  filePath = "/opt/traefik/access-{{ env "attr.unique.network.ip-address" }}.log"
   
 [api]
   dashboard = true
   insecure  = true
 
 [certificatesResolvers.letsencrypt.acme]
-  email = "andy@hashidemos.io"
+  email = ""
   storage = "/opt/traefik/acme.json"
   # use staging server for testing
   # caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
@@ -202,7 +208,7 @@ job "traefik" {
 
 [entryPoints]
 [entryPoints.web]
-  address = ":80"
+  address = ":{{env "NOMAD_PORT_http"}}"
 
   [entryPoints.web.http]
     [entryPoints.web.http.redirections]
@@ -211,16 +217,28 @@ job "traefik" {
         scheme = "https"
 
 [entryPoints.websecure]
-  address = ":443"
+  address = ":{{env "NOMAD_PORT_https"}}"
 
   [entryPoints.websecure.http.tls]
     certResolver = "letsencrypt"
 
 [entryPoints.traefik]
-  address = ":8081"
+  address = ":{{env "NOMAD_PORT_api"}}"
+
+# [entryPoints.vmrc902t]
+#   address = ":902/tcp"
+
+# [entryPoints.vmrc902u]
+#   address = ":902/udp"
+
+# [entryPoints.vmrc903t]
+#   address = ":903/tcp"
 
 [log]
-  filePath = "/opt/traefik/traefik.log"
+  filePath = "/opt/traefik/traefik-{{ env "attr.unique.network.ip-address" }}.log"
+  
+[pilot]
+  token = "${pilot_token}"
 
 # Enable Consul Catalog configuration backend.
 [providers.consulCatalog]
@@ -250,18 +268,17 @@ EOF
       }
 
       resources {
-        cpu    = 100
-        memory = 128
+        cpu    = 57
+        memory = 41
       }
 
       scaling "cpu" {
         enabled = true
-        min     = 50
         max     = 500
 
         policy {
-          cooldown            = "5m"
-          evaluation_interval = "30s"
+          cooldown            = "24h"
+          evaluation_interval = "24h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -273,12 +290,11 @@ EOF
 
       scaling "mem" {
         enabled = true
-        min     = 128
         max     = 512
 
         policy {
-          cooldown            = "5m"
-          evaluation_interval = "30s"
+          cooldown            = "24h"
+          evaluation_interval = "24h"
 
           check "max" {
             strategy "app-sizing-max" {}

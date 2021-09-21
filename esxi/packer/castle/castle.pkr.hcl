@@ -82,13 +82,6 @@ build {
 
   provisioner "shell" {
     inline = [
-      "sudo mv /home/${var.ssh_username}/unbound.conf /etc/unbound/unbound.conf",
-      "sudo systemctl restart unbound"
-    ]
-  }
-
-  provisioner "shell" {
-    inline = [
       "curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -",
       "sudo apt-add-repository \"deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main\"",
       "sudo apt-get update",

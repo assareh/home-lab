@@ -1,27 +1,19 @@
-job "speedtest" {
+job "node-exporter" {
   datacenters = ["dc1"]
+  type        = "system"
 
   priority = 10
 
-  group "speedtest" {
+  group "node-exporter" {
     network {
       port "http" {
-        static = 8001
-        to     = 80
+        static = 9100
       }
     }
 
     service {
-      name = "speedtest"
+      name = "node-exporter"
       port = "http"
-
-      tags = [
-        "dnsmasq.cname=true",
-        "traefik.enable=true",
-        "traefik.http.routers.speedtest.entryPoints=websecure",
-        "traefik.http.routers.speedtest.rule=Host(`speedtest.hashidemos.io`)",
-        "traefik.http.routers.speedtest.tls=true",
-      ]
 
       check {
         type     = "http"
@@ -37,12 +29,25 @@ job "speedtest" {
       }
     }
 
-    task "speedtest" {
+    task "node-exporter" {
       driver = "docker"
 
       config {
-        image = "adolfintel/speedtest:5.2.4"
+        image = "prom/node-exporter"
         ports = ["http"]
+
+        args = [
+          "--path.procfs=/host/proc",
+          "--path.sysfs=/host/sys",
+          "--collector.filesystem.ignored-mount-points",
+          "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+        ]
+
+        volumes = [
+          "/proc:/host/proc:ro",
+          "/sys:/host/sys:ro",
+          "/:/rootfs:ro"
+        ]
       }
 
       resources {

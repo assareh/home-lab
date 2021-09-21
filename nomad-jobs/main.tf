@@ -7,11 +7,11 @@ resource "nomad_job" "tfc-agent" {
 }
 
 resource "nomad_job" "controller" {
-  jobspec = file("${path.module}/controller.nomad")
+  jobspec = file("${path.module}/storage-controller.nomad")
 }
 
 resource "nomad_job" "node" {
-  jobspec = file("${path.module}/node.nomad")
+  jobspec = file("${path.module}/storage-node.nomad")
 }
 
 data "nomad_plugin" "nas" {
@@ -25,14 +25,6 @@ resource "nomad_job" "consul-esm" {
 
 resource "nomad_job" "pi-hole" {
   jobspec = file("${path.module}/pi-hole.nomad")
-
-  hcl2 {
-    enabled  = true
-    allow_fs = true
-    vars = {
-      "docker_password" = var.docker_password
-    }
-  }
 }
 
 resource "nomad_external_volume" "consul_snapshots" {
@@ -327,6 +319,10 @@ resource "nomad_job" "prometheus" {
   depends_on = [nomad_external_volume.prometheus]
 }
 
+resource "nomad_job" "prometheus-esxi-exporter" {
+  jobspec = file("${path.module}/prometheus-esxi-exporter.nomad")
+}
+
 resource "nomad_job" "das-autoscaler" {
   jobspec = file("${path.module}/das-autoscaler.nomad")
 }
@@ -334,3 +330,16 @@ resource "nomad_job" "das-autoscaler" {
 resource "nomad_job" "telegraf" {
   jobspec = file("${path.module}/telegraf.nomad")
 }
+
+resource "nomad_job" "telegraf-devices-collector" {
+  jobspec = file("${path.module}/telegraf-devices-collector.nomad")
+}
+
+resource "nomad_job" "internet-monitoring" {
+  jobspec = file("${path.module}/internet-monitoring.nomad")
+}
+
+resource "nomad_job" "speedtest" {
+  jobspec = file("${path.module}/speedtest.nomad")
+}
+

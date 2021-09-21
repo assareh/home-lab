@@ -1,6 +1,8 @@
 job "das-autoscaler" {
   datacenters = ["dc1"]
 
+  priority = 5
+
   group "autoscaler" {
     task "autoscaler" {
       driver = "docker"
@@ -24,18 +26,16 @@ job "das-autoscaler" {
         destination = "${NOMAD_TASK_DIR}/autoscaler.hcl"
 
         data = <<EOH
-log_level = "debug"
-
-nomad {
-  address = "{{ with service "nomad-client" }}{{ with index . 0 }}http://{{.Address}}:{{.Port}}{{ end }}{{ end }}"
-  namespace = "*"
-}
-
 apm "prometheus" {
   driver = "prometheus"
   config = {
     address = "{{ with service "prometheus" }}{{ with index . 0 }}http://{{.Address}}:{{.Port}}{{ end }}{{ end }}"
   }
+}
+
+nomad {
+  address = "{{ with service "nomad-client" }}{{ with index . 0 }}http://{{.Address}}:{{.Port}}{{ end }}{{ end }}"
+  namespace = "*"
 }
 
 policy_eval {
@@ -48,18 +48,17 @@ EOH
       }
 
       resources {
-        cpu    = 1024
-        memory = 512
+        cpu    = 1322
+        memory = 146
       }
 
       scaling "cpu" {
         enabled = true
-        min     = 50
         max     = 2000
 
         policy {
-          cooldown            = "5m"
-          evaluation_interval = "30s"
+          cooldown            = "24h"
+          evaluation_interval = "24h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -71,12 +70,11 @@ EOH
 
       scaling "mem" {
         enabled = true
-        min     = 64
         max     = 1024
 
         policy {
-          cooldown            = "5m"
-          evaluation_interval = "30s"
+          cooldown            = "24h"
+          evaluation_interval = "24h"
 
           check "max" {
             strategy "app-sizing-max" {}
@@ -98,8 +96,8 @@ EOH
       check {
         type     = "http"
         path     = "/v1/health"
-        interval = "5s"
-        timeout  = "2s"
+        interval = "10s"
+        timeout  = "31s"
 
         check_restart {
           limit = 3

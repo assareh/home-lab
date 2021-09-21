@@ -19,13 +19,20 @@ There is an example service registration in the [consul-esm](./consul-esm) folde
 
 ### Grafana
 There are dashboards for the following in the [grafana-dashboards](./grafana-dashboards) folder:
-- Consul Cluster Health
-- Vault Cluster Health
-- Nomad Allocations and Tasks
+- [Consul Cluster Health](https://github.com/tradel/vault-consul-monitoring/blob/master/dashboards/consul_cluster_health.json)
+- [Vault Cluster Health](https://github.com/tradel/vault-consul-monitoring/blob/master/dashboards/vault_cluster_health.json)
+- [Nomad Cluster](https://github.com/bitrockteam/caravan-application-support/blob/release/caravan-0.1/grafana_dashboards/nomad-cluster_rev1.json)
+- [Nomad Jobs](https://github.com/bitrockteam/caravan-application-support/blob/release/caravan-0.1/grafana_dashboards/nomad-jobs_rev1.json)
+- [Node Exporter](https://github.com/bitrockteam/caravan-application-support/blob/release/caravan-0.1/grafana_dashboards/node-exporter_rev1.json)
 - [ESXi Host](https://grafana.com/grafana/dashboards/10076)
 - [Pi-hole](https://grafana.com/grafana/dashboards/10176)
+- [Internet connection](https://github.com/geerlingguy/internet-pi/blob/master/internet-monitoring/grafana/provisioning/dashboards/internet-connection.json)
+- [Speedtest](https://github.com/MiguelNdeCarvalho/speedtest-exporter/blob/main/Dashboard/Speedtest%20Dashboard-1609529464845.json)
+- [Blackbox Exporter](https://grafana.com/grafana/dashboards/7587)
+- [Prometheus 2.0 Stats](https://github.com/grafana/grafana/blob/main/public/app/plugins/datasource/prometheus/dashboards/prometheus_2_stats.json)
+- [Ubiquiti EdgeRouter](https://github.com/WaterByWind/grafana-dashboards/tree/master/UBNT-EdgeRouter)
 
-These must be manually imported from within Grafana. The pi-hole dashboard requires the [Pie Chart plugin](https://grafana.com/grafana/plugins/grafana-piechart-panel/). One way to install it is to clone the repo into your grafana_lib/plugins directory.
+These must be manually imported from within Grafana. Some of the dashboards require Grafana plugins.
 
 ### hclfmt-all
 Script to invoke linter on all nomad files in the folder. Requires the deprecated [hclfmt](https://github.com/fatih/hclfmt) be installed and available in your path.
@@ -38,6 +45,8 @@ I am using Pi-hole as my primary LDNS. I have a filter configured in a Nomad tem
 
 I am using [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation) as the resolver, this is not required and can be removed.
 
+[Keepalived](https://www.keepalived.org) is used to provide a floating VIP (virtual address). This is useful if you would like to use Pi-hole as a local DNS server.
+
 ### Splunk
 https://docs.splunk.com/Documentation/Splunk/8.2.1/Admin/MoreaboutSplunkFree
 
@@ -47,7 +56,7 @@ I run this as an Exec instead of Docker to make sure local networking works as e
 ### Traefik
 I am using the [Let's Encrypt integration](https://doc.traefik.io/traefik/https/acme/) to automatically obtain and renew a publicly signed wildcard certificate. This is not required. You'll need to search and replace all tags with your domain name.
 
-[Keepalived](https://www.keepalived.org) is used to provide a static VIP (virtual addresss). This is useful if you would like to expose a port on your router and forward traffic to the Traefik ingress.
+[Keepalived](https://www.keepalived.org) is used to provide a floating VIP (virtual address). This is useful if you would like to expose a port on your router and forward traffic to the Traefik ingress.
 
 #### Issues
 - Watching [#7430](https://github.com/traefik/traefik/issues/7430) for a UDP fix

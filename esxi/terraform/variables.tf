@@ -49,11 +49,6 @@ variable "nodes_green" {
   type        = map(any)
 }
 
-variable "node_moat" {
-  description = "A map of host name and network names and MAC addresses for moat node"
-  type        = object({ name = string, network_interfaces = list(map(any)) })
-}
-
 variable "node_nas" {
   description = "A map of host name and MAC address for nas node"
   type        = object({ name = string, mac_address = string })
@@ -77,11 +72,6 @@ variable "template_blue" {
 
 variable "template_green" {
   description = "Name of template to use for green nodes"
-  type        = string
-}
-
-variable "template_moat" {
-  description = "Name of template to use for moat nodes"
   type        = string
 }
 

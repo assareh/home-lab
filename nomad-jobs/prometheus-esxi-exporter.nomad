@@ -16,8 +16,8 @@ job "prometheus-esxi-exporter" {
       check {
         type     = "http"
         path     = "/"
-        interval = "5s"
-        timeout  = "2s"
+        interval = "10s"
+        timeout  = "31s"
 
         check_restart {
           limit = 3
@@ -39,24 +39,23 @@ job "prometheus-esxi-exporter" {
       }
 
       env {
-        ESX_HOST     = "192.168.10.6"
+        ESX_HOST     = "esxi.service.consul"
         ESX_USERNAME = "prometheus"
         ESX_LOG      = "debug"
       }
 
       resources {
-        cpu    = 100
-        memory = 128
+        cpu    = 57
+        memory = 14
       }
 
       scaling "cpu" {
         enabled = true
-        min     = 50
         max     = 500
 
         policy {
-          cooldown            = "5m"
-          evaluation_interval = "30s"
+          cooldown            = "24h"
+          evaluation_interval = "1h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -68,12 +67,11 @@ job "prometheus-esxi-exporter" {
 
       scaling "mem" {
         enabled = true
-        min     = 64
         max     = 512
 
         policy {
-          cooldown            = "5m"
-          evaluation_interval = "30s"
+          cooldown            = "24h"
+          evaluation_interval = "1h"
 
           check "max" {
             strategy "app-sizing-max" {}
