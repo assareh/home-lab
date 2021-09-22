@@ -94,7 +94,7 @@ job "internet-monitoring" {
 
       resources {
         cpu    = 57
-        memory = 10
+        memory = 25
       }
 
       template {
@@ -103,6 +103,13 @@ job "internet-monitoring" {
 modules:
   http_2xx:
     prober: http
+    timeout: 5s
+    http:
+      method: GET
+      valid_status_codes: [200]
+      preferred_ip_protocol: ip4
+      follow_redirects: true
+      fail_if_not_ssl: true
   http_post_2xx:
     prober: http
     http:
@@ -174,6 +181,7 @@ EOH
 
       scaling "mem" {
         enabled = true
+        min     = 20 # less than this will fail to start
         max     = 512
 
         policy {

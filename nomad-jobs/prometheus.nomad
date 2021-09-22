@@ -108,10 +108,8 @@ scrape_configs:
     params:
       module: [http_2xx] # Look for a HTTP 200 response.
     static_configs:
-    - targets:
-        [
-          'https://www.google.com'
-        ]
+      - targets:
+        - https://google.com
     relabel_configs:
     - source_labels: [__address__]
       target_label: __param_target

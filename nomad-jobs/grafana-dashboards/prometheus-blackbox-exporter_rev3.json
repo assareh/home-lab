@@ -1101,7 +1101,7 @@
     ]
   },
   "timezone": "",
-  "title": "Prometheus Blackbox Exporter",
+  "title": "Blackbox Exporter",
   "uid": "xtkCtBkiz",
   "version": 2
 }
