@@ -10,7 +10,7 @@ provider "vault" {
 
 resource "vault_approle_auth_backend_role_secret_id" "wrapped_secret_id" {
   role_name    = "bootstrap"
-  wrapping_ttl = "420s"
+  wrapping_ttl = "600s"
   count        = 3
 }
 

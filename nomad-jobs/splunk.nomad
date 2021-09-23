@@ -11,14 +11,12 @@ job "splunk" {
         to = 8000
       }
 
-      port "collector" {
-        static = 9090
-        to     = 9090
+      port "http_event_collector" {
+        static = 8088
       }
 
       port "syslog" {
         static = 514
-        to     = 514
       }
     }
 
@@ -43,7 +41,7 @@ job "splunk" {
 
       config {
         image = "splunk/splunk:8.1.3-debian"
-        ports = ["http", "collector", "syslog"]
+        ports = ["http", "http_event_collector", "syslog"]
       }
 
       volume_mount {
@@ -96,8 +94,8 @@ EOF
       }
 
       service {
-        name = "splunk-collector"
-        port = "collector"
+        name = "splunk-http-event-collector"
+        port = "http_event_collector"
 
         check {
           type     = "tcp"

@@ -19,8 +19,10 @@ listener "tcp" {
 storage "consul" {}
 
 telemetry {
-  disable_hostname = true
-  dogstatsd_addr   = "localhost:8125"
+  disable_hostname          = true
+  dogstatsd_addr            = "localhost:8125"
+  enable_hostname_label     = true
+  prometheus_retention_time = "0h"
 }
 
 api_addr = "https://vault.service.consul:8200"

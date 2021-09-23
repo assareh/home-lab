@@ -331,6 +331,10 @@ resource "nomad_job" "telegraf" {
   jobspec = file("${path.module}/telegraf.nomad")
 }
 
+resource "nomad_job" "fluentd" {
+  jobspec = file("${path.module}/fluentd.nomad")
+}
+
 resource "nomad_job" "telegraf-devices-collector" {
   jobspec = file("${path.module}/telegraf-devices-collector.nomad")
 }

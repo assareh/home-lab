@@ -5,7 +5,6 @@ job "prometheus-esxi-exporter" {
     network {
       port "exporter" {
         static = 9512
-        to     = 9512
       }
     }
 
@@ -46,7 +45,7 @@ job "prometheus-esxi-exporter" {
 
       resources {
         cpu    = 57
-        memory = 14
+        memory = 13
       }
 
       scaling "cpu" {

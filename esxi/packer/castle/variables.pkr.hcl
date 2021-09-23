@@ -48,7 +48,7 @@ variable "network_name" {
 
 variable "nomad_version" {
   type    = string
-  default = "1.1.4+ent"
+  default = "1.1.5+ent"
 }
 
 variable "remote_datastore" {

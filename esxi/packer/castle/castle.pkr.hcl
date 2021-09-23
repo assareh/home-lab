@@ -122,7 +122,9 @@ build {
       "sudo mv /home/${var.ssh_username}/vault.service /usr/lib/systemd/system/vault.service",
       "sudo systemctl daemon-reload",
       "sudo touch /var/log/vault_audit.log",
-      "sudo chown vault:vault /var/log/vault_audit.log"
+      "sudo chown vault:vault /var/log/vault_audit.log",
+      "sudo touch /var/log/vault_audit.pos",
+      "sudo chmod 666 /var/log/vault_audit.pos"
     ]
   }
 

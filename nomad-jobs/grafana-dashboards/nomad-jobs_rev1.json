@@ -382,7 +382,7 @@
       "thresholds": [],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Block/Peding/Restart",
+      "title": "Block/Pending/Restart",
       "tooltip": {
         "shared": true,
         "sort": 0,

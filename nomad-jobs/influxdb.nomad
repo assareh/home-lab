@@ -5,7 +5,6 @@ job "influxdb" {
     network {
       port "http" {
         static = 8086
-        to     = 8086
       }
     }
 

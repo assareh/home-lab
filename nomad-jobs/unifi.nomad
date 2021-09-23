@@ -17,7 +17,6 @@ job "unifi" {
     network {
       port "cmdctrl" {
         static = 8080
-        to     = 8080
       }
 
       port "https" {
@@ -26,7 +25,6 @@ job "unifi" {
 
       port "stun" {
         static = 3478
-        to     = 3478
       }
     }
 

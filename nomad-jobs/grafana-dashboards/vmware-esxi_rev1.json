@@ -555,14 +555,14 @@
           "refId": "A"
         },
         {
-          "expr": "((vmware_datastore_capacity_size{host_name=~\"$esxhost\", ds_name=~\"backup_nfs\"}) - (vmware_datastore_freespace_size{host_name=~\"$esxhost\", ds_name=~\"backup_nfs\"})) * 100 / (vmware_datastore_capacity_size{host_name=~\"$esxhost\", ds_name=~\"backup_nfs\"})",
+          "expr": "((vmware_datastore_capacity_size{host_name=~\"$esxhost\", ds_name=~\"datastore3\"}) - (vmware_datastore_freespace_size{host_name=~\"$esxhost\", ds_name=~\"datastore3\"})) * 100 / (vmware_datastore_capacity_size{host_name=~\"$esxhost\", ds_name=~\"datastore3\"})",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "B"
         }
       ],
       "thresholds": "70,90",
-      "title": "DS backup_nfs usage",
+      "title": "DS datastore3 usage",
       "type": "singlestat",
       "valueFontSize": "80%",
       "valueMaps": [
