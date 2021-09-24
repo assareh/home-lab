@@ -48,7 +48,7 @@ job "fluentd" {
 <filter vault_audit>
   @type record_transformer
   <record>
-    cluster v5
+    cluster castle
   </record>
 </filter>
 
