@@ -17,6 +17,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
+  "id": 20,
   "links": [],
   "panels": [
     {
@@ -76,7 +77,7 @@
         "showThresholdMarkers": true,
         "text": {}
       },
-      "pluginVersion": "7.5.6",
+      "pluginVersion": "7.5.5",
       "targets": [
         {
           "expr": "speedtest_download_bits_per_second{}",
@@ -147,7 +148,7 @@
         "showThresholdMarkers": true,
         "text": {}
       },
-      "pluginVersion": "7.5.6",
+      "pluginVersion": "7.5.5",
       "targets": [
         {
           "expr": "speedtest_upload_bits_per_second{}",
@@ -219,7 +220,7 @@
         "showThresholdMarkers": true,
         "text": {}
       },
-      "pluginVersion": "7.5.6",
+      "pluginVersion": "7.5.5",
       "targets": [
         {
           "expr": "speedtest_ping_latency_milliseconds",
@@ -325,94 +326,106 @@
       "type": "timeseries"
     },
     {
-      "cards": {
-        "cardHSpacing": 2,
-        "cardMinWidth": 5,
-        "cardRound": null,
-        "cardVSpacing": 2
-      },
-      "color": {
-        "cardColor": "#b4ff00",
-        "colorScale": "sqrt",
-        "colorScheme": "interpolateGnYlRd",
-        "defaultColor": "#757575",
-        "exponent": 0.5,
-        "max": 1,
-        "min": 0,
-        "mode": "discrete",
-        "thresholds": [
-          {
-            "$$hashKey": "object:68",
-            "color": "#37872D",
-            "tooltip": "Up",
-            "value": "1"
-          },
-          {
-            "$$hashKey": "object:72",
-            "color": "#C4162A",
-            "tooltip": "Down",
-            "value": "0"
-          }
-        ]
-      },
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {},
         "overrides": []
       },
+      "fill": 1,
+      "fillGradient": 10,
       "gridPos": {
         "h": 9,
         "w": 12,
         "x": 12,
         "y": 9
       },
-      "highlightCards": true,
-      "id": 14,
+      "hiddenSeries": false,
+      "id": 16,
       "legend": {
-        "show": false
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "max": true,
+        "min": true,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": true
       },
-      "links": [],
-      "nullPointMode": "as empty",
-      "pageSize": 15,
-      "seriesFilterIndex": -1,
-      "statusmap": {
-        "ConfigVersion": "v1"
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
       },
+      "percentage": false,
+      "pluginVersion": "7.5.5",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
       "targets": [
         {
-          "expr": "probe_success",
-          "format": "time_series",
+          "expr": "speedtest_ping_latency_milliseconds",
           "interval": "",
-          "intervalFactor": 1,
-          "legendFormat": "{{instance}}",
+          "legendFormat": "Ping (ms)",
           "refId": "A"
+        },
+        {
+          "expr": "speedtest_jitter_latency_milliseconds",
+          "interval": "",
+          "legendFormat": "Jitter (ms)",
+          "refId": "B"
         }
       ],
-      "title": "Uptime",
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Ping and Jitter (ms)",
       "tooltip": {
-        "extraInfo": "",
-        "freezeOnClick": true,
-        "items": [],
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
         "show": true,
-        "showExtraInfo": false,
-        "showItems": false
+        "values": []
       },
-      "type": "flant-statusmap-panel",
-      "useMax": true,
-      "usingPagination": false,
-      "xAxis": {
-        "show": true
-      },
-      "yAxis": {
-        "maxWidth": -1,
-        "minWidth": -1,
-        "show": true
-      },
-      "yAxisSort": "metrics",
-      "yLabel": {
-        "delimiter": "",
-        "labelTemplate": "",
-        "usingSplitLabel": false
+      "yaxes": [
+        {
+          "$$hashKey": "object:291",
+          "format": "ms",
+          "label": "Time",
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:292",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
       }
     },
     {
@@ -429,7 +442,7 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 9,
-        "w": 24,
+        "w": 12,
         "x": 0,
         "y": 18
       },
@@ -453,7 +466,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.5.6",
+      "pluginVersion": "7.5.5",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -512,9 +525,100 @@
         "align": false,
         "alignLevel": null
       }
+    },
+    {
+      "cards": {
+        "cardHSpacing": 2,
+        "cardMinWidth": 5,
+        "cardRound": null,
+        "cardVSpacing": 2
+      },
+      "color": {
+        "cardColor": "#b4ff00",
+        "colorScale": "sqrt",
+        "colorScheme": "interpolateGnYlRd",
+        "defaultColor": "#757575",
+        "exponent": 0.5,
+        "max": 1,
+        "min": 0,
+        "mode": "discrete",
+        "thresholds": [
+          {
+            "$$hashKey": "object:68",
+            "color": "#37872D",
+            "tooltip": "Up",
+            "value": "1"
+          },
+          {
+            "$$hashKey": "object:72",
+            "color": "#C4162A",
+            "tooltip": "Down",
+            "value": "0"
+          }
+        ]
+      },
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "highlightCards": true,
+      "id": 14,
+      "legend": {
+        "show": false
+      },
+      "links": [],
+      "nullPointMode": "as empty",
+      "pageSize": 15,
+      "seriesFilterIndex": -1,
+      "statusmap": {
+        "ConfigVersion": "v1"
+      },
+      "targets": [
+        {
+          "expr": "probe_success",
+          "format": "time_series",
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Uptime",
+      "tooltip": {
+        "extraInfo": "",
+        "freezeOnClick": true,
+        "items": [],
+        "show": true,
+        "showExtraInfo": false,
+        "showItems": false
+      },
+      "type": "flant-statusmap-panel",
+      "useMax": true,
+      "usingPagination": false,
+      "xAxis": {
+        "show": true
+      },
+      "yAxis": {
+        "maxWidth": -1,
+        "minWidth": -1,
+        "show": true
+      },
+      "yAxisSort": "metrics",
+      "yLabel": {
+        "delimiter": "",
+        "labelTemplate": "",
+        "usingSplitLabel": false
+      }
     }
   ],
-  "refresh": "5m",
+  "refresh": "1h",
   "schemaVersion": 27,
   "style": "dark",
   "tags": [
@@ -525,7 +629,7 @@
     "list": []
   },
   "time": {
-    "from": "now-7d",
+    "from": "now-24h",
     "to": "now"
   },
   "timepicker": {
@@ -554,7 +658,7 @@
     ]
   },
   "timezone": "browser",
-  "title": "Internet connection",
+  "title": "Internet Connection",
   "uid": "o9mIe_Aik",
-  "version": 12
+  "version": 4
 }

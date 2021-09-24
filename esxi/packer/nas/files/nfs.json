@@ -7,15 +7,15 @@
         "id":"nfs-111",
         "name":"NFS TCP on port 111",
         "tcp":"localhost:111",
-        "interval":"15s",
-        "timeout":"2s"
+        "interval":"10s",
+        "timeout":"31s"
       },
       {
         "id":"nfs-2049",
         "name":"NFS TCP on port 2049",
         "tcp":"localhost:2049",
-        "interval":"15s",
-        "timeout":"2s"
+        "interval":"10s",
+        "timeout":"31s"
       }
     ]
   }

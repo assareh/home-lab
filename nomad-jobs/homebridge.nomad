@@ -2,6 +2,13 @@ job "homebridge" {
   datacenters = ["dc1"]
 
   group "homebridge" {
+    volume "homebridge" {
+      type            = "csi"
+      source          = "homebridge"
+      read_only       = false
+      attachment_mode = "file-system"
+      access_mode     = "single-node-writer"
+    }
 
     vault {
       policies = ["homebridge"]
@@ -10,7 +17,6 @@ job "homebridge" {
     network {
       port "http" {
         static = 8581
-        to     = 8581
       }
     }
 
@@ -35,7 +41,7 @@ job "homebridge" {
 
         check_restart {
           limit = 3
-          grace = "60s"
+          grace = "240s"
         }
       }
     }
@@ -43,19 +49,23 @@ job "homebridge" {
     task "homebridge" {
       driver = "docker"
 
+      volume_mount {
+        volume      = "homebridge"
+        destination = "/homebridge"
+      }
+
       config {
         image        = "oznu/homebridge:4.0.0"
         network_mode = "host"
 
         volumes = [
-          "/mnt/data/homebridge:/homebridge",
           "local/config.json:/homebridge/config.json",
         ]
       }
 
       env {
         HOMEBRIDGE_CONFIG_UI      = "1"
-        HOMEBRIDGE_CONFIG_UI_PORT = "8581"
+        HOMEBRIDGE_CONFIG_UI_PORT = "${NOMAD_PORT_http}"
         TZ                        = "America/Los_Angeles"
         VAULT_ADDR                = "https://vault.service.consul:8200"
       }
@@ -65,7 +75,7 @@ job "homebridge" {
         env         = true
 
         data = <<EOF
-HUE_API_KEY="{{with secret "hue/data/api-key"}}{{.Data.data.HUE_API_KEY}}{{end}}"
+HUE_API_KEY="{{with secret "nomad/data/homebridge"}}{{.Data.data.HUE_API_KEY}}{{end}}"
 EOF
       }
 
@@ -76,32 +86,18 @@ EOF
         "interface": "{{ env "attr.unique.network.ip-address" }}"
     },
     "bridge": {
+        "name": "Homebridge",
+        "username": "{{with secret "nomad/data/homebridge"}}{{.Data.data.BRIDGE_USERNAME}}{{end}}",
+        "port": "{{with secret "nomad/data/homebridge"}}{{.Data.data.BRIDGE_PORT}}{{end}}",
+        "pin": "{{with secret "nomad/data/homebridge"}}{{.Data.data.BRIDGE_PIN}}{{end}}"
     },
     "accessories": [
     ],
   "platforms": [
     {
-      "platform": "SmartThings-v2",
-      "name": "SmartThings-v2",
-      "app_url": "https://graph-na04-useast2.api.smartthings.com:443/api/smartapps/installations/",
-      "app_id": "{{with secret "nomad/data/smartthings"}}{{.Data.data.app_id}}{{end}}",
-      "access_token": "{{with secret "nomad/data/smartthings"}}{{.Data.data.access_token}}{{end}}",
-      "temperature_unit": "F",
-      "validateTokenId": false,
-      "logConfig": {
-        "debug": false,
-        "showChanges": true,
-        "hideTimestamp": false,
-        "hideNamePrefix": false,
-        "file": {
-          "enabled": true
-        }
-      }
-    },
-    {
       "platform": "config",
       "name": "Config",
-      "port": 8581
+      "port": {{ env "NOMAD_HOST_PORT_http" }}
     }
   ]
 }

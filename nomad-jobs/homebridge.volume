@@ -1,0 +1,14 @@
+# Full configuration options can be found at:
+# https://www.nomadproject.io/docs/commands/volume/create#volume-specification
+
+id           = "homebridge"
+name         = "homebridge"
+type         = "csi"
+plugin_id    = "nas"
+capacity_max = "100M"
+capacity_min = "10M"
+
+capability {
+  access_mode     = "single-node-writer"
+  attachment_mode = "file-system"
+}

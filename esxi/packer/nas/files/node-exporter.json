@@ -1,0 +1,22 @@
+{
+  "service":{
+    "Name":"node-exporter",
+    "Port":9100,
+    "checks":[
+      {
+        "id":"nas-node-exporter-tcp-9100",
+        "name":"Prometheus Node exporter TCP on port 9100",
+        "tcp":"localhost:9100",
+        "interval":"10s",
+        "timeout":"31s"
+      },
+      {
+        "id":"nas-node-exporter-http-9100",
+        "name":"Prometheus Node exporter HTTP on port 9100",
+        "http":"http://localhost:9100",
+        "interval":"10s",
+        "timeout":"31s"
+      }
+    ]
+  }
+}
