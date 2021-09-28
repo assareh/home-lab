@@ -1,8 +1,11 @@
 #/bin/bash
+cd jobs
 for jobfile in *.nomad; do
   hclfmt -w $jobfile
 done
+cd ../volumes
 for jobfile in *.volume; do
   hclfmt -w $jobfile
 done
+cd ..
 echo 'Done, all nice and formatted!'

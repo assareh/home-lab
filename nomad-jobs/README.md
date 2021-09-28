@@ -63,6 +63,7 @@ I am using the [Let's Encrypt integration](https://doc.traefik.io/traefik/https/
 
 ## Links and References
 Examples here:
+- https://github.com/GuyBarros/nomad_jobs
 - https://github.com/scarolan/migrate-vmware-to-nomad/blob/master/nomad-job.hcl
 - https://github.com/angrycub/nomad_example_jobs/tree/main/qemu
 - https://github.com/jescholl/nomad

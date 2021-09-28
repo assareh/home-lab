@@ -3,15 +3,15 @@ provider "nomad" {
 }
 
 resource "nomad_job" "tfc-agent" {
-  jobspec = file("${path.module}/tfc-agent.nomad")
+  jobspec = file("${path.module}/jobs/tfc-agent.nomad")
 }
 
 resource "nomad_job" "controller" {
-  jobspec = file("${path.module}/storage-controller.nomad")
+  jobspec = file("${path.module}/jobs/storage-controller.nomad")
 }
 
 resource "nomad_job" "node" {
-  jobspec = file("${path.module}/storage-node.nomad")
+  jobspec = file("${path.module}/jobs/storage-node.nomad")
 }
 
 data "nomad_plugin" "nas" {
@@ -20,11 +20,11 @@ data "nomad_plugin" "nas" {
 }
 
 resource "nomad_job" "consul-esm" {
-  jobspec = file("${path.module}/consul-esm.nomad")
+  jobspec = file("${path.module}/jobs/consul-esm.nomad")
 }
 
 resource "nomad_job" "pi-hole" {
-  jobspec = file("${path.module}/pi-hole.nomad")
+  jobspec = file("${path.module}/jobs/pi-hole.nomad")
 }
 
 resource "nomad_external_volume" "consul_snapshots" {
@@ -47,7 +47,7 @@ resource "nomad_external_volume" "consul_snapshots" {
 }
 
 resource "nomad_job" "consul-backups" {
-  jobspec    = file("${path.module}/consul-backups.nomad")
+  jobspec    = file("${path.module}/jobs/consul-backups.nomad")
   depends_on = [nomad_external_volume.consul_snapshots]
 }
 
@@ -71,7 +71,7 @@ resource "nomad_external_volume" "nomad_snapshots" {
 }
 
 resource "nomad_job" "nomad-backups" {
-  jobspec    = file("${path.module}/nomad-backups.nomad")
+  jobspec    = file("${path.module}/jobs/nomad-backups.nomad")
   depends_on = [nomad_external_volume.nomad_snapshots]
 }
 
@@ -95,7 +95,7 @@ resource "nomad_external_volume" "traefik" {
 }
 
 resource "nomad_job" "traefik" {
-  jobspec    = templatefile("${path.module}/traefik.nomad", { pilot_token = var.pilot_token })
+  jobspec    = templatefile("${path.module}/jobs/traefik.nomad", { pilot_token = var.pilot_token })
   depends_on = [nomad_external_volume.traefik]
 }
 
@@ -157,7 +157,7 @@ resource "nomad_external_volume" "gitlab_logs" {
 }
 
 resource "nomad_job" "gitlab" {
-  jobspec    = file("${path.module}/gitlab.nomad")
+  jobspec    = file("${path.module}/jobs/gitlab.nomad")
   depends_on = [nomad_external_volume.gitlab_config, nomad_external_volume.gitlab_data, nomad_external_volume.gitlab_logs]
 }
 
@@ -200,7 +200,7 @@ resource "nomad_external_volume" "splunk_var" {
 }
 
 resource "nomad_job" "splunk" {
-  jobspec    = file("${path.module}/splunk.nomad")
+  jobspec    = file("${path.module}/jobs/splunk.nomad")
   depends_on = [nomad_external_volume.splunk_etc, nomad_external_volume.splunk_var]
 }
 
@@ -224,7 +224,7 @@ resource "nomad_external_volume" "unifi" {
 }
 
 resource "nomad_job" "unifi" {
-  jobspec    = file("${path.module}/unifi.nomad")
+  jobspec    = file("${path.module}/jobs/unifi.nomad")
   depends_on = [nomad_external_volume.unifi]
 }
 
@@ -248,7 +248,7 @@ resource "nomad_external_volume" "influxdb" {
 }
 
 resource "nomad_job" "influxdb" {
-  jobspec    = file("${path.module}/influxdb.nomad")
+  jobspec    = file("${path.module}/jobs/influxdb.nomad")
   depends_on = [nomad_external_volume.influxdb]
 }
 
@@ -291,7 +291,7 @@ resource "nomad_external_volume" "grafana_lib" {
 }
 
 resource "nomad_job" "grafana" {
-  jobspec    = file("${path.module}/grafana.nomad")
+  jobspec    = file("${path.module}/jobs/grafana.nomad")
   depends_on = [nomad_external_volume.grafana_etc, nomad_external_volume.grafana_lib]
 }
 
@@ -315,36 +315,36 @@ resource "nomad_external_volume" "prometheus" {
 }
 
 resource "nomad_job" "prometheus" {
-  jobspec = file("${path.module}/prometheus.nomad")
+  jobspec = file("${path.module}/jobs/prometheus.nomad")
   depends_on = [nomad_external_volume.prometheus]
 }
 
 resource "nomad_job" "prometheus-esxi-exporter" {
-  jobspec = file("${path.module}/prometheus-esxi-exporter.nomad")
+  jobspec = file("${path.module}/jobs/prometheus-esxi-exporter.nomad")
 }
 
 resource "nomad_job" "das-autoscaler" {
-  jobspec = file("${path.module}/das-autoscaler.nomad")
+  jobspec = file("${path.module}/jobs/das-autoscaler.nomad")
 }
 
 resource "nomad_job" "telegraf" {
-  jobspec = file("${path.module}/telegraf.nomad")
+  jobspec = file("${path.module}/jobs/telegraf.nomad")
 }
 
 resource "nomad_job" "fluentd" {
-  jobspec = file("${path.module}/fluentd.nomad")
+  jobspec = file("${path.module}/jobs/fluentd.nomad")
 }
 
 resource "nomad_job" "telegraf-devices-collector" {
-  jobspec = file("${path.module}/telegraf-devices-collector.nomad")
+  jobspec = file("${path.module}/jobs/telegraf-devices-collector.nomad")
 }
 
 resource "nomad_job" "internet-monitoring" {
-  jobspec = file("${path.module}/internet-monitoring.nomad")
+  jobspec = file("${path.module}/jobs/internet-monitoring.nomad")
 }
 
 resource "nomad_job" "speedtest" {
-  jobspec = file("${path.module}/speedtest.nomad")
+  jobspec = file("${path.module}/jobs/speedtest.nomad")
 }
 
 resource "nomad_external_volume" "homebridge" {
@@ -367,6 +367,6 @@ resource "nomad_external_volume" "homebridge" {
 }
 
 resource "nomad_job" "homebridge" {
-  jobspec = file("${path.module}/homebridge.nomad")
+  jobspec = file("${path.module}/jobs/homebridge.nomad")
   depends_on = [nomad_external_volume.homebridge]
 }
