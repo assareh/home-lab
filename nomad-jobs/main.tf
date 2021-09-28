@@ -370,3 +370,27 @@ resource "nomad_job" "homebridge" {
   jobspec = file("${path.module}/jobs/homebridge.nomad")
   depends_on = [nomad_external_volume.homebridge]
 }
+
+resource "nomad_external_volume" "jenkins" {
+  depends_on   = [data.nomad_plugin.nas]
+  type         = "csi"
+  plugin_id    = "nas"
+  volume_id    = "jenkins"
+  name         = "jenkins"
+  capacity_min = "10M"
+  capacity_max = "500M"
+
+  capability {
+    access_mode     = "single-node-writer"
+    attachment_mode = "file-system"
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "nomad_job" "jenkins" {
+  jobspec = file("${path.module}/jobs/jenkins.nomad")
+  depends_on = [nomad_external_volume.jenkins]
+}

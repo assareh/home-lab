@@ -247,9 +247,6 @@ job "traefik" {
 [log]
   filePath = "/opt/traefik/traefik-{{ env "attr.unique.network.ip-address" }}.log"
   
-[pilot]
-  token = "${pilot_token}"
-
 # Enable Consul Catalog configuration backend.
 [providers.consulCatalog]
     connectAware     = true

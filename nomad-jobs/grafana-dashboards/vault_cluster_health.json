@@ -139,7 +139,7 @@
           "measurement": "consul_health_checks",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT last(\"passing\") AS unsealed FROM \"telegraf\".\"autogen\".\"consul_health_checks\" WHERE role='castle' AND check_name='Vault Sealed Status' GROUP BY \"check_id\"",
+          "query": "SELECT last(\"passing\") AS unsealed FROM \"telegraf\".\"autogen\".\"consul_health_checks\" WHERE role='vault-server' AND check_name='Vault Sealed Status' GROUP BY \"check_id\"",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "table",
@@ -225,7 +225,7 @@
           "measurement": "cpu",
           "orderByTime": "ASC",
           "policy": "autogen",
-          "query": "SELECT max(\"usage_user\") AS \"user_cpu\", max(\"usage_iowait\") AS \"iowait_cpu\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE (\"role\" = 'castle' AND \"host\" =~ /^$host$/ AND \"datacenter\" =~ /^$dc$/) AND $timeFilter GROUP BY time($__interval), \"host\" fill(null)",
+          "query": "SELECT max(\"usage_user\") AS \"user_cpu\", max(\"usage_iowait\") AS \"iowait_cpu\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE (\"role\" = 'vault-server' AND \"host\" =~ /^$host$/ AND \"datacenter\" =~ /^$dc$/) AND $timeFilter GROUP BY time($__interval), \"host\" fill(null)",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series",
@@ -247,7 +247,7 @@
             {
               "key": "role",
               "operator": "=",
-              "value": "castle"
+              "value": "vault-server"
             },
             {
               "condition": "AND",
@@ -365,7 +365,7 @@
           "measurement": "diskio",
           "orderByTime": "ASC",
           "policy": "autogen",
-          "query": "SELECT non_negative_difference(max(\"read_bytes\")) + non_negative_difference(max(\"write_bytes\")) AS \"bytes\" FROM \"telegraf\".\"autogen\".\"diskio\" WHERE (\"role\" = 'castle' AND \"host\" =~ /^$host$/ AND \"datacenter\"  =~ /^$dc$/) AND $timeFilter GROUP BY time($__interval), \"host\" fill(null)",
+          "query": "SELECT non_negative_difference(max(\"read_bytes\")) + non_negative_difference(max(\"write_bytes\")) AS \"bytes\" FROM \"telegraf\".\"autogen\".\"diskio\" WHERE (\"role\" = 'vault-server' AND \"host\" =~ /^$host$/ AND \"datacenter\"  =~ /^$dc$/) AND $timeFilter GROUP BY time($__interval), \"host\" fill(null)",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series",
@@ -391,7 +391,7 @@
             {
               "key": "role",
               "operator": "=",
-              "value": "castle"
+              "value": "vault-server"
             }
           ]
         }
@@ -497,7 +497,7 @@
           "measurement": "net",
           "orderByTime": "ASC",
           "policy": "autogen",
-          "query": "SELECT non_negative_difference(max(\"bytes_recv\")) + non_negative_difference(max(\"bytes_sent\")) AS \"bytes\" FROM \"telegraf\".\"autogen\".\"net\" WHERE (\"role\" = 'castle' AND \"host\" =~ /^$host$/ AND \"datacenter\" =~ /^$dc$/) AND $timeFilter GROUP BY time($__interval), \"host\" fill(null)",
+          "query": "SELECT non_negative_difference(max(\"bytes_recv\")) + non_negative_difference(max(\"bytes_sent\")) AS \"bytes\" FROM \"telegraf\".\"autogen\".\"net\" WHERE (\"role\" = 'vault-server' AND \"host\" =~ /^$host$/ AND \"datacenter\" =~ /^$dc$/) AND $timeFilter GROUP BY time($__interval), \"host\" fill(null)",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series",
@@ -523,7 +523,7 @@
             {
               "key": "role",
               "operator": "=",
-              "value": "castle"
+              "value": "vault-server"
             }
           ]
         }
@@ -623,7 +623,7 @@
           "measurement": "vault.core.handle_request",
           "orderByTime": "ASC",
           "policy": "autogen",
-          "query": "SELECT mean(\"value\") AS \"count\" FROM \"telegraf\".\"autogen\".\"vault.core.handle_request\" WHERE $timeFilter AND \"role\"='castle' GROUP BY time($__interval), \"host\" FILL(null)",
+          "query": "SELECT mean(\"value\") AS \"count\" FROM \"telegraf\".\"autogen\".\"vault.core.handle_request\" WHERE $timeFilter AND \"role\"='vault-server' GROUP BY time($__interval), \"host\" FILL(null)",
           "rawQuery": false,
           "refId": "A",
           "resultFormat": "time_series",
@@ -761,7 +761,7 @@
           "measurement": "vault.runtime.alloc_bytes",
           "orderByTime": "ASC",
           "policy": "autogen",
-          "query": "SELECT max(\"value\") AS \"alloc_bytes\" FROM \"telegraf\".\"autogen\".\"vault.runtime.alloc_bytes\" WHERE (\"role\" = 'castle' AND \"host\" =~ /^$host$/ AND \"datacenter\" =~ /^$dc$/) AND $timeFilter GROUP BY time($__interval), \"host\" fill(0)",
+          "query": "SELECT max(\"value\") AS \"alloc_bytes\" FROM \"telegraf\".\"autogen\".\"vault.runtime.alloc_bytes\" WHERE (\"role\" = 'vault-server' AND \"host\" =~ /^$host$/ AND \"datacenter\" =~ /^$dc$/) AND $timeFilter GROUP BY time($__interval), \"host\" fill(0)",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series",
@@ -783,7 +783,7 @@
             {
               "key": "role",
               "operator": "=",
-              "value": "castle"
+              "value": "vault-server"
             }
           ]
         },
@@ -804,7 +804,7 @@
           ],
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT max(\"value\") AS \"sys_bytes\" FROM \"telegraf\".\"autogen\".\"vault.runtime.sys_bytes\" WHERE (\"role\" = 'castle' AND \"host\" =~ /^$host$/ AND \"datacenter\" =~ /^$dc$/) AND $timeFilter GROUP BY time($__interval), \"host\" fill(0)",
+          "query": "SELECT max(\"value\") AS \"sys_bytes\" FROM \"telegraf\".\"autogen\".\"vault.runtime.sys_bytes\" WHERE (\"role\" = 'vault-server' AND \"host\" =~ /^$host$/ AND \"datacenter\" =~ /^$dc$/) AND $timeFilter GROUP BY time($__interval), \"host\" fill(0)",
           "rawQuery": true,
           "refId": "B",
           "resultFormat": "time_series",
@@ -842,7 +842,7 @@
           "measurement": "mem",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT mean(\"total\") AS \"total_bytes\" FROM \"telegraf\".\"autogen\".\"mem\" WHERE (\"host\" =~ /^$host$/ AND \"datacenter\" =~ /^$dc$/ AND \"role\" = 'castle') AND $timeFilter GROUP BY time($__interval), \"host\" fill(null)",
+          "query": "SELECT mean(\"total\") AS \"total_bytes\" FROM \"telegraf\".\"autogen\".\"mem\" WHERE (\"host\" =~ /^$host$/ AND \"datacenter\" =~ /^$dc$/ AND \"role\" = 'vault-server') AND $timeFilter GROUP BY time($__interval), \"host\" fill(null)",
           "rawQuery": true,
           "refId": "C",
           "resultFormat": "time_series",
@@ -876,7 +876,7 @@
               "condition": "AND",
               "key": "role",
               "operator": "=",
-              "value": "castle"
+              "value": "vault-server"
             }
           ]
         }
@@ -1494,7 +1494,7 @@
           "measurement": "vault.runtime.gc_pause_ns",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT last(\"upper\")/1000000 AS \"milliseconds\" FROM \"telegraf\".\"autogen\".\"vault.runtime.gc_pause_ns\" WHERE $timeFilter AND \"role\"='castle' GROUP BY host, time($__interval) FILL(0)",
+          "query": "SELECT last(\"upper\")/1000000 AS \"milliseconds\" FROM \"telegraf\".\"autogen\".\"vault.runtime.gc_pause_ns\" WHERE $timeFilter AND \"role\"='vault-server' GROUP BY host, time($__interval) FILL(0)",
           "rawQuery": false,
           "refId": "A",
           "resultFormat": "time_series",
@@ -1522,7 +1522,7 @@
             {
               "key": "role",
               "operator": "=",
-              "value": "castle"
+              "value": "vault-server"
             },
             {
               "condition": "AND",
@@ -2159,7 +2159,7 @@
         "multi": false,
         "name": "host",
         "options": [],
-        "query": "show tag values on telegraf from cpu with key = \"host\" where role = 'castle'",
+        "query": "show tag values on telegraf from cpu with key = \"host\" where role = 'vault-server'",
         "refresh": 2,
         "regex": "",
         "sort": 1,
@@ -2179,7 +2179,7 @@
         "multi": false,
         "name": "dc",
         "options": [],
-        "query": "show tag values on telegraf from cpu with key = \"datacenter\" where role = 'castle'",
+        "query": "show tag values on telegraf from cpu with key = \"datacenter\" where role = 'vault-server'",
         "refresh": 2,
         "regex": "",
         "sort": 1,
