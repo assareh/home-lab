@@ -28,7 +28,10 @@ job "speedtest" {
         port     = "http"
         path     = "/"
         interval = "10s"
-        timeout  = "31s"
+        timeout  = "2s"
+
+        success_before_passing   = "3"
+        failures_before_critical = "3"
 
         check_restart {
           limit = 3

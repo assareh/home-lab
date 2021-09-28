@@ -15,6 +15,7 @@ job "pihole" {
   }
 
   group "pihole" {
+    shutdown_delay = "5s"
     network {
       port "cloudflared" {}
 
@@ -130,7 +131,10 @@ EOF
           type     = "http"
           path     = "/admin/"
           interval = "10s"
-          timeout  = "31s"
+          timeout  = "2s"
+
+          success_before_passing   = "3"
+          failures_before_critical = "3"
 
           check_restart {
             limit = 3
@@ -143,30 +147,23 @@ EOF
         name = "dns"
         port = "dns"
 
-        check {
-          name     = "service: dns udp check"
-          type     = "script"
-          command  = "/local/consul-udp-check"
-          args     = ["localhost", "${NOMAD_PORT_dns}"]
-          interval = "10s"
-          timeout  = "31s"
-
-          check_restart {
-            limit = 3
-            grace = "60s"
-          }
-        }
+        // check {
+        //   name     = "service: dns udp check"
+        //   type     = "script"
+        //   command  = "/local/consul-udp-check"
+        //   args     = ["localhost", "${NOMAD_PORT_dns}"]
+        //   interval = "10s"
+        //   timeout  = "2s"
+        // }
 
         check {
           name     = "service: dns tcp check"
           type     = "tcp"
           interval = "10s"
-          timeout  = "31s"
+          timeout  = "2s"
 
-          check_restart {
-            limit = 3
-            grace = "60s"
-          }
+          success_before_passing   = "3"
+          failures_before_critical = "3"
         }
 
         check {
@@ -175,7 +172,7 @@ EOF
           command  = "/usr/bin/dig"
           args     = ["+short", "@127.0.0.1"]
           interval = "10s"
-          timeout  = "31s"
+          timeout  = "2s"
 
           check_restart {
             limit = 3
@@ -311,7 +308,10 @@ EOF
         check {
           type     = "tcp"
           interval = "10s"
-          timeout  = "31s"
+          timeout  = "2s"
+
+          success_before_passing   = "3"
+          failures_before_critical = "3"
 
           check_restart {
             limit = 3
@@ -328,7 +328,10 @@ EOF
           type     = "http"
           path     = "/metrics"
           interval = "10s"
-          timeout  = "31s"
+          timeout  = "2s"
+
+          success_before_passing   = "3"
+          failures_before_critical = "3"
 
           check_restart {
             limit = 3
@@ -435,7 +438,10 @@ EOF
           type     = "http"
           path     = "/metrics"
           interval = "10s"
-          timeout  = "31s"
+          timeout  = "2s"
+
+          success_before_passing   = "3"
+          failures_before_critical = "3"
 
           check_restart {
             limit = 3

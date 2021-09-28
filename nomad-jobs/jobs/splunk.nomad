@@ -37,7 +37,8 @@ job "splunk" {
     }
 
     task "splunk" {
-      driver = "docker"
+      driver         = "docker"
+      shutdown_delay = "5s"
 
       config {
         image = "splunk/splunk:8.1.3-debian"
@@ -84,7 +85,10 @@ EOF
           type     = "http"
           path     = "/"
           interval = "10s"
-          timeout  = "31s"
+          timeout  = "2s"
+
+          success_before_passing   = "3"
+          failures_before_critical = "3"
 
           check_restart {
             limit = 3
@@ -100,7 +104,10 @@ EOF
         check {
           type     = "tcp"
           interval = "10s"
-          timeout  = "31s"
+          timeout  = "2s"
+
+          success_before_passing   = "3"
+          failures_before_critical = "3"
 
           check_restart {
             limit = 3

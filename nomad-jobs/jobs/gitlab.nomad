@@ -37,8 +37,9 @@ job "gitlab" {
     }
 
     task "gitlab" {
-      driver       = "docker"
-      kill_timeout = "45s"
+      driver         = "docker"
+      kill_timeout   = "45s"
+      shutdown_delay = "5s"
 
       config {
         image = "gitlab/gitlab-ee:13.11.1-ee.0"
@@ -80,11 +81,14 @@ job "gitlab" {
           name     = "service: gitlab tcp check"
           type     = "tcp"
           interval = "10s"
-          timeout  = "31s"
+          timeout  = "2s"
+
+          success_before_passing   = "3"
+          failures_before_critical = "3"
 
           check_restart {
             limit = 3
-            grace = "60s"
+            grace = "180s"
           }
         }
 
@@ -92,13 +96,16 @@ job "gitlab" {
           name     = "service: gitlab readiness check"
           type     = "http"
           interval = "10s"
-          timeout  = "31s"
+          timeout  = "2s"
           path     = "/-/readiness?token="
           protocol = "https"
 
+          success_before_passing   = "3"
+          failures_before_critical = "3"
+
           check_restart {
             limit = 3
-            grace = "120s"
+            grace = "180s"
           }
         }
 
@@ -106,13 +113,16 @@ job "gitlab" {
           name     = "service: gitlab liveness check"
           type     = "http"
           interval = "10s"
-          timeout  = "31s"
+          timeout  = "2s"
           path     = "/-/liveness?token="
           protocol = "https"
 
+          success_before_passing   = "3"
+          failures_before_critical = "3"
+
           check_restart {
             limit = 3
-            grace = "120s"
+            grace = "180s"
           }
         }
       }

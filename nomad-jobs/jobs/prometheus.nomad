@@ -66,7 +66,7 @@ scrape_configs:
   - job_name: 'prometheus'
     scrape_interval: 5s
     static_configs:
-      - targets: ['localhost:9090']
+      - targets: ['localhost:{{env "NOMAD_PORT_prometheus_ui"}}']
 
   - job_name: nomad
     metrics_path: '/v1/metrics'
@@ -109,7 +109,10 @@ scrape_configs:
       module: [http_2xx] # Look for a HTTP 200 response.
     static_configs:
       - targets:
-        - https://google.com
+        - https://status.aws.amazon.com
+        - https://status.cloud.google.com
+        - https://status.azure.com
+        - https://www.apple.com/support/systemstatus/
     relabel_configs:
     - source_labels: [__address__]
       target_label: __param_target
@@ -188,7 +191,10 @@ EOH
           type     = "http"
           path     = "/-/healthy"
           interval = "10s"
-          timeout  = "31s"
+          timeout  = "2s"
+
+          success_before_passing   = "3"
+          failures_before_critical = "3"
 
           check_restart {
             limit = 3

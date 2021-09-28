@@ -29,7 +29,8 @@ job "unifi" {
     }
 
     task "unifi" {
-      driver = "docker"
+      driver         = "docker"
+      shutdown_delay = "5s"
 
       volume_mount {
         volume      = "unifi"
@@ -63,7 +64,10 @@ job "unifi" {
           name     = "service: cmdctrl tcp check"
           type     = "tcp"
           interval = "10s"
-          timeout  = "31s"
+          timeout  = "2s"
+
+          success_before_passing   = "3"
+          failures_before_critical = "3"
 
           check_restart {
             limit = 3
@@ -96,7 +100,10 @@ job "unifi" {
           protocol = "https"
           path     = "/status"
           interval = "10s"
-          timeout  = "31s"
+          timeout  = "2s"
+
+          success_before_passing   = "3"
+          failures_before_critical = "3"
 
           check_restart {
             limit = 3

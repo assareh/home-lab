@@ -1,5 +1,7 @@
 # Nomad Jobs for Home Lab
 
+![](../nomad.png)
+
 A set of Nomad job files for services and applications I run in my home lab. These may require modification to work in your environment.
 
 Storage is provided via Florian Apolloner's [NFS CSI Plugin](https://gitlab.com/rocketduck/csi-plugin-nfs) which should work with any NFS share. Please review his documentation for details on how to configure and use it.

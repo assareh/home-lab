@@ -4,6 +4,7 @@ job "traefik" {
   priority = 85
 
   group "traefik" {
+    shutdown_delay = "5s"
     vault {
       policies = ["traefik"]
     }
@@ -63,7 +64,10 @@ job "traefik" {
         type     = "tcp"
         port     = "api"
         interval = "10s"
-        timeout  = "31s"
+        timeout  = "2s"
+
+        success_before_passing   = "3"
+        failures_before_critical = "3"
 
         check_restart {
           limit = 3
@@ -81,7 +85,10 @@ job "traefik" {
         type     = "tcp"
         port     = "http"
         interval = "10s"
-        timeout  = "31s"
+        timeout  = "2s"
+
+        success_before_passing   = "3"
+        failures_before_critical = "3"
 
         check_restart {
           limit = 3
@@ -99,7 +106,10 @@ job "traefik" {
         type     = "tcp"
         port     = "https"
         interval = "10s"
-        timeout  = "31s"
+        timeout  = "2s"
+
+        success_before_passing   = "3"
+        failures_before_critical = "3"
 
         check_restart {
           limit = 3
@@ -198,7 +208,7 @@ job "traefik" {
   insecure  = true
 
 [certificatesResolvers.letsencrypt.acme]
-  email = ""
+  email = "andy@hashidemos.io"
   storage = "/opt/traefik/acme.json"
   # use staging server for testing
   # caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"

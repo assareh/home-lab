@@ -22,7 +22,7 @@ job "fluentd" {
       driver = "docker"
 
       config {
-        image = "assareh/fluentd-splunk-hec:v1.14-debian-1"
+        image = "assareh/fluentd-splunk-hec:v1.14-debian-1" # custom image with fluent-plugin-splunk-enterprise
         ports = ["fluentd"]
 
         volumes = [
