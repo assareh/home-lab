@@ -1,7 +1,6 @@
 # Read the documentation for locals blocks here:
 # https://www.packer.io/docs/templates/hcl_templates/blocks/locals
 locals {
-  authorized_keys = vault("/packer/data/ssh", "authorized_keys")
   consul_gossip   = vault("/packer/data/consul", "gossip")
   consul_license  = vault("/packer/data/consul", "license")
   esxi_password   = vault("/packer/data/esxi", "esxi_password")

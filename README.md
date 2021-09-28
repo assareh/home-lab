@@ -1,5 +1,7 @@
 # Home Lab
 
+![](./nomad.png)
+
 If you want to skip ahead, please review [Repository Structure](#repository-structure) and [Preparatory Steps](#preparatory-steps).
 
 ## Background

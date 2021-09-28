@@ -1,0 +1,48 @@
+#cloud-config
+autoinstall:
+  apt:
+    primary:
+      - arches: [amd64]
+        uri: "http://us.archive.ubuntu.com/ubuntu/"
+  identity:
+    hostname: ubuntu-server
+    username: ubuntu
+    password: "password hash here"
+  keyboard:
+    layout: en
+    variant: us
+  late-commands:
+    - sed -i -e 's/#PasswordAuthentication yes/PasswordAuthentication no/g' /target/etc/ssh/sshd_config
+    - echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/ubuntu
+    - curtin in-target --target=/target -- chmod 440 /etc/sudoers.d/ubuntu
+  locale: en_US
+  network:
+    network:
+      version: 2
+      ethernets:
+        ens160:
+          dhcp4: true
+  packages:
+    - curl
+    - git
+    - jq
+    - net-tools
+    - nfs-common
+    - nfs-kernel-server
+    - open-vm-tools
+    - software-properties-common
+    - unzip
+    - vim
+    - zfsutils-linux
+    - zip
+  ssh:
+    allow-pw: yes
+    authorized-keys:
+      - "your ssh public key"
+    install-server: yes
+  storage:
+    layout:
+      name: direct
+  user-data:
+    disable_root: false
+  version: 1

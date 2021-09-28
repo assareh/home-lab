@@ -2,47 +2,39 @@
 # build blocks. A build block runs provisioner and post-processors on a
 # source. Read the documentation for source blocks here:
 # https://www.packer.io/docs/templates/hcl_templates/blocks/source
-source "vmware-iso" "ubuntu-18-nas" {
+source "vmware-iso" "ubuntu-20-nas" {
   boot_command = [
-    "<enter><wait><f6><wait><esc><wait>",
-    "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
-    "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
-    "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
-    "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
-    "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
-    "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
-    "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
-    "<bs><bs><bs><bs><bs><bs><bs><bs><bs><bs>",
-    "<bs><bs><bs>",
-    "/install/vmlinuz",
-    " initrd=/install/initrd.gz",
-    " priority=critical",
-    " locale=en_US",
-    " file=/media/preseed.cfg",
-    "<enter>"
+    "<enter><wait2><enter><wait><f6><esc><wait>",
+    " autoinstall<wait2> ds=nocloud",
+    "<wait><enter>"
   ]
-  cpus                 = "${var.vm_cpu_num}"
-  disk_size            = "${var.vm_disk_size}"
-  disk_type_id         = "thin"
-  floppy_files         = ["./preseed.cfg"]
-  guest_os_type        = "ubuntu-64"
-  iso_checksum         = "sha256:8c5fc24894394035402f66f3824beb7234b757dd2b5531379cb310cedfdf0996"
-  iso_url              = "https://cdimage.ubuntu.com/releases/18.04/release/ubuntu-18.04.5-server-amd64.iso"
-  keep_registered      = true
-  memory               = "${var.vm_mem_size}"
-  network_adapter_type = "vmxnet3"
-  network_name         = "${var.network_name}"
-  remote_datastore     = "${var.remote_datastore}"
-  remote_host          = "${var.esxi_host}"
-  remote_password      = "${local.esxi_password}"
-  remote_port          = 22
-  remote_type          = "esx5"
-  remote_username      = "${local.esxi_username}"
-  shutdown_command     = "sudo -S shutdown -P now"
-  skip_export          = true
-  ssh_password         = "${local.ssh_password}"
-  ssh_username         = "${var.ssh_username}"
-  vm_name              = "${local.vm_name}"
+  boot_wait              = "5s"
+  cd_files               = ["./meta-data", "./user-data"]
+  cd_label               = "cidata"
+  cpus                   = "${var.vm_cpu_num}"
+  disk_size              = "${var.vm_disk_size}"
+  disk_type_id           = "thin"
+  guest_os_type          = "ubuntu-64"
+  headless               = "false"
+  iso_checksum           = "sha256:f8e3086f3cea0fb3fefb29937ab5ed9d19e767079633960ccb50e76153effc98"
+  iso_url                = "https://releases.ubuntu.com/20.04/ubuntu-20.04.3-live-server-amd64.iso"
+  keep_registered        = true
+  memory                 = "${var.vm_mem_size}"
+  network_adapter_type   = "vmxnet3"
+  network_name           = "${var.network_name}"
+  remote_datastore       = "${var.remote_datastore}"
+  remote_host            = "${var.esxi_host}"
+  remote_password        = "${local.esxi_password}"
+  remote_port            = 22
+  remote_type            = "esx5"
+  remote_username        = "${local.esxi_username}"
+  shutdown_command       = "sudo -S shutdown -P now"
+  skip_export            = true
+  ssh_handshake_attempts = "1000"
+  ssh_password           = "${local.ssh_password}"
+  ssh_timeout            = "1200s"
+  ssh_username           = "${var.ssh_username}"
+  vm_name                = "${local.vm_name}"
   vmx_data = {
     "virtualhw.version" = "17"
   }
@@ -53,24 +45,11 @@ source "vmware-iso" "ubuntu-18-nas" {
 # documentation for build blocks can be found here:
 # https://www.packer.io/docs/templates/hcl_templates/blocks/build
 build {
-  sources = ["source.vmware-iso.ubuntu-18-nas"]
+  sources = ["source.vmware-iso.ubuntu-20-nas"]
 
   provisioner "file" {
     destination = "/home/${var.ssh_username}/"
     source      = "files/"
-  }
-
-  provisioner "shell" {
-    expect_disconnect = true
-    inline = [
-      "touch /home/${var.ssh_username}/.hushlogin",
-      "mkdir -p /home/${var.ssh_username}/.ssh",
-      "echo '${local.authorized_keys}' > /home/${var.ssh_username}/.ssh/authorized_keys",
-      "chmod 600 /home/${var.ssh_username}/.ssh/authorized_keys",
-      "chown -R ${var.ssh_username} /home/${var.ssh_username}/.ssh",
-      "sudo sed -i -e 's/#PasswordAuthentication yes/PasswordAuthentication no/g' /etc/ssh/sshd_config",
-      "sudo service ssh restart"
-    ]
   }
 
   provisioner "shell" {

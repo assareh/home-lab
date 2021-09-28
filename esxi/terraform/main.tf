@@ -136,6 +136,10 @@ resource "esxi_virtual_disk" "nas_disk1" {
   virtual_disk_dir        = lookup(var.node_nas, "name")
   virtual_disk_size       = var.nas_disk_size
   virtual_disk_type       = "thin"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "esxi_virtual_disk" "nas_disk2" {
@@ -143,4 +147,8 @@ resource "esxi_virtual_disk" "nas_disk2" {
   virtual_disk_dir        = lookup(var.node_nas, "name")
   virtual_disk_size       = var.nas_disk_size
   virtual_disk_type       = "thin"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
