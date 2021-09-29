@@ -41,11 +41,11 @@ job "pihole" {
       driver = "docker"
 
       config {
-        image        = "pihole/pihole:v5.8.1"
+        image        = "pihole/pihole:2021.09"
         network_mode = "host"
         volumes = [
           "local/etc-dnsmasq.d/00-custom.conf:/etc/dnsmasq.d/00-custom.conf",
-          "local/pihole/pihole-FTL.conf:/etc/pihole/pihole-FTL.conf",
+          "local/pihole:/etc/pihole",
         ]
       }
 
