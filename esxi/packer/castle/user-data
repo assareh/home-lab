@@ -43,6 +43,7 @@ autoinstall:
     - nfs-common
     - open-vm-tools
     - qemu
+    - qemu-kvm
     - software-properties-common
     - unzip
     - vim
