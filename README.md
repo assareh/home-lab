@@ -60,6 +60,8 @@ In a cloud environment we would have primitives like auto scaling groups that fa
 
 ![](https://learn.hashicorp.com/img/vault_cluster.png)
 
+![](https://www.datocms-assets.com/2885/1595116050-vault-splunk-screenshot-1.png)
+
 These guides serve as a great starting point and are what I have followed:
 - [Monitor Telemetry & Audit Device Log Data](https://learn.hashicorp.com/tutorials/vault/monitor-telemetry-audit-splunk)
 - [Vault Cluster Monitoring](https://learn.hashicorp.com/tutorials/vault/monitoring) (specifically the [PDF](https://hashicorp-education.s3-us-west-2.amazonaws.com/whitepapers/Vault/Vault-Consul-Monitoring-Guide.pdf))
