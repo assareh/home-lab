@@ -41,9 +41,6 @@ plugin "docker" {
     allow_caps = ["AUDIT_WRITE", "CHOWN", "DAC_OVERRIDE", "FOWNER", "FSETID", "KILL", "MKNOD", "NET_ADMIN",
     "NET_BIND_SERVICE", "NET_BROADCAST", "NET_RAW", "SETFCAP", "SETGID", "SETPCAP", "SETUID", "SYS_CHROOT"]
     allow_privileged = true # required for NFS CSI Plugin
-    volumes {
-      enabled = true
-    }
   }
 }
 

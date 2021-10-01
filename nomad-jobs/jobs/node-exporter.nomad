@@ -46,11 +46,26 @@ job "node-exporter" {
           "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
         ]
 
-        volumes = [
-          "/proc:/host/proc:ro",
-          "/sys:/host/sys:ro",
-          "/:/rootfs:ro"
-        ]
+        mount {
+          type     = "bind"
+          target   = "/host/proc"
+          source   = "/proc"
+          readonly = true
+        }
+
+        mount {
+          type     = "bind"
+          target   = "/host/sys"
+          source   = "/sys"
+          readonly = true
+        }
+
+        mount {
+          type     = "bind"
+          target   = "/rootfs"
+          source   = "/"
+          readonly = true
+        }
       }
 
       resources {

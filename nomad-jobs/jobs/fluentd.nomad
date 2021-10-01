@@ -25,10 +25,22 @@ job "fluentd" {
         image = "assareh/fluentd-splunk-hec:v1.14-debian-1" # custom image with fluent-plugin-splunk-enterprise
         ports = ["fluentd"]
 
+        mount {
+          type     = "bind"
+          target   = "/var/log/vault_audit.log"
+          source   = "/var/log/vault_audit.log"
+          readonly = true
+        }
+
+        mount {
+          type     = "bind"
+          target   = "/var/log/vault_audit.pos"
+          source   = "/var/log/vault_audit.pos"
+          readonly = false
+        }
+
         volumes = [
-          "local/config/fluentd.conf:/fluentd/etc/fluent.conf",
-          "/var/log/vault_audit.log:/var/log/vault_audit.log",
-          "/var/log/vault_audit.pos:/var/log/vault_audit.pos",
+          "local/config/fluentd.conf:/fluentd/etc/fluent.conf"
         ]
       }
 
