@@ -27,7 +27,7 @@ variable "cni_version" {
 
 variable "consul_version" {
   type    = string
-  default = "1.10.2+ent"
+  default = "1.10.3+ent"
 }
 
 variable "containerd_version" {
@@ -47,7 +47,7 @@ variable "network_name" {
 
 variable "nomad_version" {
   type    = string
-  default = "1.1.5+ent"
+  default = "1.1.6+ent"
 }
 
 variable "remote_datastore" {
@@ -62,7 +62,7 @@ variable "ssh_username" {
 
 variable "vault_version" {
   type    = string
-  default = "1.8.2+ent"
+  default = "1.8.4+ent"
 }
 
 variable "vm_cpu_num" {

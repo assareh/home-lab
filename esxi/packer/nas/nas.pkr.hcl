@@ -38,6 +38,9 @@ source "vmware-iso" "ubuntu-20-nas" {
   vmx_data = {
     "virtualhw.version" = "17"
   }
+  vmx_data_post = {
+    "bios.bootorder" = "hdd,cdrom"
+  }
   vnc_over_websocket = "true"
 }
 

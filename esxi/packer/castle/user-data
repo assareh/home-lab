@@ -33,8 +33,6 @@ autoinstall:
           dhcp4: true
   packages:
     - curl
-    - default-jdk
-    - default-jre
     - docker.io
     - git
     - gnupg
@@ -42,6 +40,7 @@ autoinstall:
     - net-tools
     - nfs-common
     - open-vm-tools
+    - openjdk-8-jdk # for jenkins
     - qemu
     - qemu-kvm
     - software-properties-common

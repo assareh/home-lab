@@ -65,6 +65,3 @@ When rolling out a new template, make sure to increment the:
 
 ### How to build
 Execute `packer build -on-error=ask .` from within each folder to create the respective template. It may take about 10-15 minutes to complete.
-
-## Extras
-You can use `shared_packer_cache.sh` to create symbolic links to share the packer cache in each folder, saving on ISO downloads.
