@@ -18,6 +18,9 @@ The following Nomad task drivers will be installed/enabled:
 
 ![](./task_drivers.png)
 
+### K3s
+This template provides an instance of [K3s](k3s.io).
+
 ## Steps
 *Note*: These templates require SSH access to the ESXi host. I recommend creating a role and user account on the ESXi host for Packer and Terraform.
 

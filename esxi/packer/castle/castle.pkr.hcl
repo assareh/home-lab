@@ -39,7 +39,27 @@ source "vmware-iso" "ubuntu-20-castle" {
     "virtualhw.version" = "17"
   }
   vmx_data_post = {
-    "bios.bootorder" = "hdd,cdrom"
+    "bios.bootorder"        = "hdd"
+    "ide0:0.startConnected" = "FALSE"
+    "ide0:1.startConnected" = "FALSE"
+    "ide1:0.startConnected" = "FALSE"
+    "ide1:1.startConnected" = "FALSE"
+    "ide0:0.deviceType"     = "cdrom-raw"
+    "ide0:1.deviceType"     = "cdrom-raw"
+    "ide1:0.deviceType"     = "cdrom-raw"
+    "ide1:1.deviceType"     = "cdrom-raw"
+    "ide0:0.clientDevice"   = "TRUE"
+    "ide0:1.clientDevice"   = "TRUE"
+    "ide1:0.clientDevice"   = "TRUE"
+    "ide1:1.clientDevice"   = "TRUE"
+    "ide0:0.present"        = "FALSE"
+    "ide0:1.present"        = "FALSE"
+    "ide1:0.present"        = "TRUE"
+    "ide1:1.present"        = "FALSE"
+    "ide0:0.fileName"       = "emptyBackingString"
+    "ide0:1.fileName"       = "emptyBackingString"
+    "ide1:0.fileName"       = "emptyBackingString"
+    "ide1:1.fileName"       = "emptyBackingString"
   }
   vnc_over_websocket = "true"
 }
@@ -81,6 +101,17 @@ build {
       "sudo mkdir -p /opt/cni/bin/",
       "curl -LO https://github.com/containernetworking/plugins/releases/download/v${var.cni_version}/cni-plugins-linux-amd64-v${var.cni_version}.tgz",
       "sudo tar -xzf cni-plugins-linux-amd64-v${var.cni_version}.tgz -C /opt/cni/bin/"
+    ]
+  }
+
+  provisioner "shell" {
+    inline = [
+      "sudo apt install -y apt-transport-https gnupg2",
+      "curl -sL 'https://deb.dl.getenvoy.io/public/gpg.8115BA8E629CC074.key' | sudo gpg --dearmor -o /usr/share/keyrings/getenvoy-keyring.gpg",
+      "sudo apt-add-repository \"deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main\"",
+      "echo \"deb [arch=amd64 signed-by=/usr/share/keyrings/getenvoy-keyring.gpg] https://deb.dl.getenvoy.io/public/deb/ubuntu $(lsb_release -cs) main\" | sudo tee /etc/apt/sources.list.d/getenvoy.list",
+      "sudo apt update",
+      "sudo apt install -y getenvoy-envoy"
     ]
   }
 
@@ -144,6 +175,8 @@ build {
       "nomad_gossip=${local.nomad_gossip}"
     ]
     inline = [
+      "sudo cp /home/${var.ssh_username}/consul-agent-ca.pem /etc/vault.d/.",
+      "sudo mv /home/${var.ssh_username}/consul-agent-ca.pem /etc/consul.d/.",
       "sudo mv /home/${var.ssh_username}/consul.hcl /etc/consul.d/.",
       "sudo mv /home/${var.ssh_username}/nomad.hcl /etc/nomad.d/.",
       "chmod +x /home/${var.ssh_username}/gossip.sh",
@@ -151,6 +184,19 @@ build {
       "sudo chown -R consul:consul /etc/consul.d",
       "sudo chown -R nomad:nomad /etc/nomad.d",
       "sudo chmod 640 /etc/consul.d/* /etc/nomad.d/*"
+    ]
+  }
+
+  provisioner "shell" {
+    inline = [
+      "echo \"export CONSUL_HTTP_ADDR=https://127.0.0.1:8501\" | sudo tee -a /root/.bashrc",
+      "echo \"export CONSUL_CACERT=/etc/consul.d/consul-agent-ca.pem\" | sudo tee -a /root/.bashrc",
+      "echo \"export CONSUL_CLIENT_KEY=/etc/consul.d/dc1-server-consul-key.pem\" | sudo tee -a /root/.bashrc",
+      "echo \"export CONSUL_CLIENT_CERT=/etc/consul.d/dc1-server-consul.pem\" | sudo tee -a /root/.bashrc",
+      "echo \"export CONSUL_HTTP_ADDR=https://127.0.0.1:8501\" | sudo tee -a /home/${var.ssh_username}/.bashrc",
+      "echo \"export CONSUL_CACERT=/etc/consul.d/consul-agent-ca.pem\" | sudo tee -a /home/${var.ssh_username}/.bashrc",
+      "echo \"export CONSUL_CLIENT_KEY=/etc/consul.d/dc1-server-consul-key.pem\" | sudo tee -a /home/${var.ssh_username}/.bashrc",
+      "echo \"export CONSUL_CLIENT_CERT=/etc/consul.d/dc1-server-consul.pem\" | sudo tee -a /home/${var.ssh_username}/.bashrc"
     ]
   }
 }

@@ -27,14 +27,34 @@ auto_auth {
   }
 }
 
-template {
+template { # this is the Vault server cert
   source      = "cert.tpl"
   destination = "tls.crt"
 }
 
-template {
+template { # this is the Vault server private key
   source      = "key.tpl"
   destination = "tls.key"
+}
+
+template { # this is the Consul client cert for Vault storage
+  source      = "consul-client-cert.tpl"
+  destination = "dc1-client-consul.pem"
+}
+
+template { # this is the Consul client key for Vault storage
+  source      = "consul-client-key.tpl"
+  destination = "dc1-client-consul-key.pem"
+}
+
+template { # this is the Consul server cert
+  source      = "consul-server-cert.tpl"
+  destination = "dc1-server-consul.pem"
+}
+
+template { # this is the Consul server private key
+  source      = "consul-server-key.tpl"
+  destination = "dc1-server-consul-key.pem"
 }
 
 // sample for GCP KMS auto unseal credentials

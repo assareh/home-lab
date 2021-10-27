@@ -29,6 +29,14 @@ client {
   node_class = "castle"
 }
 
+consul {
+  address   = "127.0.0.1:8501"
+  ca_file   = "/etc/vault.d/consul-agent-ca.pem"
+  cert_file = "/etc/vault.d/dc1-client-consul.pem"
+  key_file  = "/etc/vault.d/dc1-client-consul-key.pem"
+  ssl       = true
+}
+
 plugin "containerd-driver" {
   config {
     enabled            = true
@@ -41,6 +49,9 @@ plugin "docker" {
     allow_caps = ["AUDIT_WRITE", "CHOWN", "DAC_OVERRIDE", "FOWNER", "FSETID", "KILL", "MKNOD", "NET_ADMIN",
     "NET_BIND_SERVICE", "NET_BROADCAST", "NET_RAW", "SETFCAP", "SETGID", "SETPCAP", "SETUID", "SYS_CHROOT"]
     allow_privileged = true # required for NFS CSI Plugin
+    volumes {
+      enabled = true
+    }
   }
 }
 

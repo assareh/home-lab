@@ -2,6 +2,10 @@ job "prometheus" {
   datacenters = ["dc1"]
 
   group "prometheus" {
+    vault {
+      policies = ["consul-client-tls"]
+    }
+
     network {
       port "prometheus_ui" {
         static = 9091
@@ -73,35 +77,64 @@ scrape_configs:
     params:
       format: ['prometheus']
     consul_sd_configs: 
-    - server: 'consul.service.consul:8500' 
+    - server: 'consul.service.consul:8501' 
+      datacenter: 'dc1'
+      scheme: 'https'
       services: ['nomad-client', 'nomad']
       tags: ['http']
+      tls_config: 
+        ca_file: '{{ env "NOMAD_SECRETS_DIR" }}/ca.pem'
+        cert_file: '{{ env "NOMAD_SECRETS_DIR" }}/cert.pem'
+        key_file: '{{ env "NOMAD_SECRETS_DIR" }}/key.pem'
 
   - job_name: consul
     metrics_path: '/v1/agent/metrics'
     params:
       format: ['prometheus']
+    tls_config: 
+      ca_file: '{{ env "NOMAD_SECRETS_DIR" }}/ca.pem'
+      cert_file: '{{ env "NOMAD_SECRETS_DIR" }}/cert.pem'
+      key_file: '{{ env "NOMAD_SECRETS_DIR" }}/key.pem'
+    scheme: 'https'
     static_configs:
     - targets: 
         [
-          '{{ with service "consul" }}{{ with index . 0 }}{{.Address}}{{ end }}{{ end }}:8500'
+          {{range $index, $service := service "consul" "any"}}{{if ne $index 0}}, {{end}}'{{.Address}}:8501'{{end}}
         ]
 
   - job_name: 'edinburgh'
     metrics_path: '/metrics'
     consul_sd_configs: 
-    - server: 'consul.service.consul:8500' 
+    - server: 'consul.service.consul:8501' 
+      datacenter: 'dc1'
+      scheme: 'https'
       services: ['prometheus-esxi-exporter']
+      tls_config: 
+        ca_file: '{{ env "NOMAD_SECRETS_DIR" }}/ca.pem'
+        cert_file: '{{ env "NOMAD_SECRETS_DIR" }}/cert.pem'
+        key_file: '{{ env "NOMAD_SECRETS_DIR" }}/key.pem'
 
   - job_name: 'pihole'
     consul_sd_configs: 
-    - server: 'consul.service.consul:8500' 
+    - server: 'consul.service.consul:8501' 
+      datacenter: 'dc1'
+      scheme: 'https'
       services: ['prometheus-pihole-exporter']
+      tls_config: 
+        ca_file: '{{ env "NOMAD_SECRETS_DIR" }}/ca.pem'
+        cert_file: '{{ env "NOMAD_SECRETS_DIR" }}/cert.pem'
+        key_file: '{{ env "NOMAD_SECRETS_DIR" }}/key.pem'
 
   - job_name: 'cloudflared'
     consul_sd_configs: 
-    - server: 'consul.service.consul:8500' 
+    - server: 'consul.service.consul:8501' 
+      datacenter: 'dc1'
+      scheme: 'https'
       services: ['prometheus-cloudflared-metrics']
+      tls_config: 
+        ca_file: '{{ env "NOMAD_SECRETS_DIR" }}/ca.pem'
+        cert_file: '{{ env "NOMAD_SECRETS_DIR" }}/cert.pem'
+        key_file: '{{ env "NOMAD_SECRETS_DIR" }}/key.pem'
 
   - job_name: 'blackbox-exporter'
     metrics_path: /probe
@@ -125,19 +158,58 @@ scrape_configs:
     scrape_interval: 1h
     scrape_timeout: 1m
     consul_sd_configs: 
-    - server: 'consul.service.consul:8500' 
+    - server: 'consul.service.consul:8501' 
+      datacenter: 'dc1'
+      scheme: 'https'
       services: ['prometheus-speedtest-exporter']
+      tls_config: 
+        ca_file: '{{ env "NOMAD_SECRETS_DIR" }}/ca.pem'
+        cert_file: '{{ env "NOMAD_SECRETS_DIR" }}/cert.pem'
+        key_file: '{{ env "NOMAD_SECRETS_DIR" }}/key.pem'
 
   - job_name: 'nodeexp'
     static_configs:
     consul_sd_configs: 
-    - server: 'consul.service.consul:8500' 
+    - server: 'consul.service.consul:8501' 
+      datacenter: 'dc1'
+      scheme: 'https'
       services: ['node-exporter']
+      tls_config: 
+        ca_file: '{{ env "NOMAD_SECRETS_DIR" }}/ca.pem'
+        cert_file: '{{ env "NOMAD_SECRETS_DIR" }}/cert.pem'
+        key_file: '{{ env "NOMAD_SECRETS_DIR" }}/key.pem'
 EOH
 
         change_mode   = "signal"
         change_signal = "SIGHUP"
         destination   = "local/config/prometheus.yml"
+      }
+
+      template {
+        destination = "secrets/ca.pem"
+        perms       = "644"
+        data        = <<EOF
+{{ with secret "pki/int_consul/issue/dc1-client" "common_name=prometheus.client.dc1.consul" }}
+{{ .Data.issuing_ca }}{{ end }}
+EOF
+      }
+
+      template {
+        destination = "secrets/cert.pem"
+        perms       = "644"
+        data        = <<EOF
+{{ with secret "pki/int_consul/issue/dc1-client" "common_name=prometheus.client.dc1.consul" }}
+{{ .Data.certificate }}{{ end }}
+EOF
+      }
+
+      template {
+        destination = "secrets/key.pem"
+        perms       = "444"
+        data        = <<EOF
+{{ with secret "pki/int_consul/issue/dc1-client" "common_name=prometheus.client.dc1.consul" }}
+{{ .Data.private_key }}{{ end }}
+EOF
       }
 
       resources {

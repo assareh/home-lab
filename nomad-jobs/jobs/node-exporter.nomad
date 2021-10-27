@@ -6,9 +6,7 @@ job "node-exporter" {
 
   group "node-exporter" {
     network {
-      port "http" {
-        static = 9100
-      }
+      port "http" {}
     }
 
     service {
@@ -40,6 +38,7 @@ job "node-exporter" {
         ports = ["http"]
 
         args = [
+          "--web.listen-address=:${NOMAD_PORT_http}",
           "--path.procfs=/host/proc",
           "--path.sysfs=/host/sys",
           "--collector.filesystem.ignored-mount-points",
@@ -70,7 +69,7 @@ job "node-exporter" {
 
       resources {
         cpu    = 57
-        memory = 14
+        memory = 16
       }
 
       scaling "cpu" {

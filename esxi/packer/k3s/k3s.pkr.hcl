@@ -2,7 +2,7 @@
 # build blocks. A build block runs provisioner and post-processors on a
 # source. Read the documentation for source blocks here:
 # https://www.packer.io/docs/templates/hcl_templates/blocks/source
-source "vmware-iso" "ubuntu-20-nas" {
+source "vmware-iso" "ubuntu-20-k3s" {
   boot_command = [
     "<enter><wait2><enter><wait><f6><esc><wait>",
     " autoinstall<wait2> ds=nocloud",
@@ -68,7 +68,7 @@ source "vmware-iso" "ubuntu-20-nas" {
 # documentation for build blocks can be found here:
 # https://www.packer.io/docs/templates/hcl_templates/blocks/build
 build {
-  sources = ["source.vmware-iso.ubuntu-20-nas"]
+  sources = ["source.vmware-iso.ubuntu-20-k3s"]
 
   provisioner "file" {
     destination = "/home/${var.ssh_username}/"
@@ -76,41 +76,17 @@ build {
   }
 
   provisioner "shell" {
-    inline = [
-      "curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -",
-      "sudo apt-add-repository \"deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main\"",
-      "sudo apt-get update",
-      "sudo apt-get upgrade -y",
-      "sudo apt-get install -y consul=${var.consul_version}",
-      "sudo apt-get autoremove -y",
-      "sudo -H -u ${var.ssh_username} consul -autocomplete-install"
-    ]
-  }
-
-  provisioner "shell" {
-    inline = [
-      "sudo apt-get install -y prometheus-node-exporter",
-      "sudo systemctl start prometheus-node-exporter.service",
-      "sudo systemctl enable prometheus-node-exporter.service"
-    ]
-  }
-
-  provisioner "shell" {
     environment_vars = [
-      "consul_gossip=${local.consul_gossip}"
+      "DEBIAN_FRONTEND=noninteractive",
+      "SSH_USERNAME=${var.ssh_username}"
     ]
-    inline = [
-      "sudo mv /home/${var.ssh_username}/consul-agent-ca.pem /etc/consul.d/.",
-      "sudo mv /home/${var.ssh_username}/consul.hcl /etc/consul.d/.",
-      "sudo mv /home/${var.ssh_username}/nfs.json /etc/consul.d/.",
-      "sudo mv /home/${var.ssh_username}/node-exporter.json /etc/consul.d/.",
-      "chmod +x /home/${var.ssh_username}/gossip.sh",
-      "/home/${var.ssh_username}/gossip.sh",
-      "sudo chmod 640 /etc/consul.d/*",
-      "sudo chown -R consul:consul /etc/consul.d",
-      "sudo hostnamectl set-hostname nas",
-      "echo '127.0.1.1       nas.unassigned-domain        nas' | sudo tee -a /etc/hosts",
-      "sudo systemctl enable consul && sudo systemctl start consul"
+    execute_command = "{{.Vars}} sudo -E -S bash '{{.Path}}'"
+    scripts = [
+      "scripts/docker.sh",
+      "scripts/k8s.sh",
+      "scripts/k3s.sh",
+      "scripts/dashboard.sh",
+      "scripts/user.sh"
     ]
   }
 }

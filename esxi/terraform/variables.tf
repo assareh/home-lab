@@ -49,6 +49,11 @@ variable "nodes_green" {
   type        = map(any)
 }
 
+variable "node_k3s" {
+  description = "A map of host name and MAC address for k3s node"
+  type        = object({ name = string, mac_address = string })
+}
+
 variable "node_nas" {
   description = "A map of host name and MAC address for nas node"
   type        = object({ name = string, mac_address = string })
@@ -75,8 +80,13 @@ variable "template_green" {
   type        = string
 }
 
+variable "template_k3s" {
+  description = "Name of template to use for k3s nodes"
+  type        = string
+}
+
 variable "template_nas" {
-  description = "Name of template to use for nas nodes"
+  description = "Name of template to use for nas node"
   type        = string
 }
 

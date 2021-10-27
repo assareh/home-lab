@@ -99,6 +99,9 @@ The high level steps are:
 3. Use the [Nomad job files](./nomad-jobs) to run services on cluster. See [README](./nomad-jobs/README.md) for specifics.
 
 ### Preparation Steps
+
+*Note*: The steps that I've documented here may not be the _best_ way of doing things-- my goal with this project is to learn.
+
 I recommend starting a Vault instance before continuing on with these steps. It will be easier to use these configs as they expect the secrets to be in Vault. Once you have a provisional Vault server running, you can build your CA, create an AppRole, and store passwords needed by the Packer templates. Later, when your real cluster is ready you can migrate the provisional Vault data to the real one. 
 
 In my environment at that stage I configured the real cluster as a DR secondary, allowing Vault to replicate all secrets and configuration to it, and then designated it the primary. I then configured the original provisional cluster as a DR secondary. Alternatively you could migrate using `vault operator migrate`, referencing the [Storage Migration tutorial](https://learn.hashicorp.com/tutorials/vault/raft-migration) Learn guide but going in the opposite direction.
@@ -165,7 +168,7 @@ vault write auth/approle/role/bootstrap \
   secret_id_ttl=420s \
   token_bound_cidrs="192.168.0.101/32","192.168.0.102/31","192.168.0.104/31","192.168.0.106/32" \
   token_period=259200 \
-  token_policies="pki,gcp-kms,nomad-server"
+  token_policies="consul-server-tls,gcp-kms,nomad-server,pki"
 ```
 Please check the [docs](https://www.vaultproject.io/api/auth/approle#create-update-approle) to understand what the above parameters do.
 
@@ -178,14 +181,24 @@ Docs:
 - https://www.nomadproject.io/docs/integrations/vault-integration
 
 #### II. Certificate authority setup
-1. Follow the [Build Your Own Certificate Authority](https://learn.hashicorp.com/tutorials/vault/pki-engine) guide to generate your root and intermediate CAs.
+1. Follow the [Build Your Own Certificate Authority](https://learn.hashicorp.com/tutorials/vault/pki-engine) guide to generate your root and intermediate CAs. 
 2. Save the root certificate as `root.crt` in the [castle files](./esxi/packer/castle/files) directory.
 3. Update the `cert.tpl` and `key.tpl` Vault Agent templates in the [castle files](./esxi/packer/castle/files) directory with your host/domain/role names. These templates are for the provisioner script that runs in Terraform. It runs Vault Agent once to authenticate to Vault and issue certificates for the Vault servers to use.
+4. Follow either the [Secure Consul Agent Communication with TLS Encryption](https://learn.hashicorp.com/tutorials/consul/tls-encryption-secure) or the [Generate mTLS Certificates for Consul with Vault](https://learn.hashicorp.com/tutorials/consul/vault-pki-consul-secure-tls?in=vault/cross-products) guide to bootstrap your Consul CA. The first uses Consul's built-in CA whereas the second uses Vault as the CA for Consul. I began with Consul initially but in the current version of this repository am using Vault.
+5. Save the Consul CA certificate as `consul-agent-ca.pem` in the [castle files](./esxi/packer/castle/files) directory.
+6. Update the `consul-server-cert.tpl`, `consul-server-key.tpl`, `consul-client-cert.tpl`, and `consul-client-key.tpl` Vault Agent templates in the [castle files](./esxi/packer/castle/files) directory with your role name. Once again these templates are for the provisioner script that runs in Terraform. It runs Vault Agent once to authenticate to Vault and issue certificates for the Consul servers to use.
+
+*Note*: Per [Jeff Mitchell](https://github.com/hashicorp/vault/issues/2075#issuecomment-259169330), if you want the full CA chain output from your intermediate CA, you should upload the root cert along with the signed intermediate CA cert when you use `set-signed`. I just appended the root certificate to the signed intermediate certificate. 
+
+*Note*: `generate_lease` must be `true` for any PKI roles that you will be using from within `template` stanzas in Nomad jobs, per [this note](https://www.nomadproject.io/docs/job-specification/template#pki-certificate) in the Nomad documentation.
 
 #### III. Customizations
 1. Configure your desired [seal stanza](https://www.vaultproject.io/docs/configuration/seal) in the [Vault configuration](./esxi/packer/castle/files/vault.hcl) file. This stanza is optional, and in the case of the master key, Vault will use the Shamir algorithm to cryptographically split the master key if this is not configured. I happen to use GCP KMS, which require GCP credentials be placed on each Vault server. There are a variety of ways to accomplish this. I have them retrieved from Vault and rendered onto the file system by Vault Agent in [setup_castle.tpl](./esxi/terraform/setup_castle.tpl), which is run as a provisioner (i know :-D) in the Terraform code.
 2. Search and replace all IP addresses to match your private network address range.
 3. If you do not have enterprise licenses search and replace all packages to oss.
+
+#### IV. Consul WAN Federation with K3s
+If you create a K3s instance, I followed [these steps](https://www.consul.io/docs/k8s/installation/multi-cluster/vms-and-kubernetes#kubernetes-as-the-secondary) to perform WAN Federation between the primary Consul data center on the Castle nodes and a secondary Consul data center on K3s. There is a Mesh Gateway Nomad job in the [nomad-jobs](./nomad-jobs) folder. The Consul Helm values and other configurations are located in the [k8s](./k8s) folder.
 
 #### Futures
 - When looking to improve this overall architecture I will be looking at adding some automated pipelines.

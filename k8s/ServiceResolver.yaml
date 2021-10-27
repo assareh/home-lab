@@ -1,0 +1,8 @@
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceResolver
+metadata:
+  name: web-dc2
+spec:
+  redirect:
+    service: web
+    datacenter: dc2

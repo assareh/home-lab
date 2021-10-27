@@ -67,7 +67,7 @@ variable "vault_version" {
 
 variable "vm_cpu_num" {
   type    = string
-  default = "2"
+  default = "3"
 }
 
 variable "vm_disk_size" {
@@ -77,5 +77,5 @@ variable "vm_disk_size" {
 
 variable "vm_mem_size" {
   type    = string
-  default = "12288"
+  default = "8192"
 }

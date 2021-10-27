@@ -18,10 +18,6 @@ job "telegraf-devices-collector" {
       template {
         data = <<EOTC
 # Telegraf Configuration
-#
-# Accepts statsd connections on port 8125.
-# Sends output to InfluxDB at http://influxdb.service.consul:8086.
-
 [global_tags]
   role = "castle"
   datacenter = "dc1"
@@ -413,8 +409,8 @@ EOTC
       }
 
       resources {
-        cpu    = 172
-        memory = 46
+        cpu    = 57
+        memory = 28
       }
 
       scaling "cpu" {

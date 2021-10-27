@@ -152,3 +152,50 @@ resource "esxi_virtual_disk" "nas_disk2" {
     prevent_destroy = true
   }
 }
+
+resource "esxi_guest" "k3s" {
+  guest_name    = lookup(var.node_k3s, "name")
+  disk_store    = var.esxi_datastore
+  clone_from_vm = var.template_k3s
+  power         = "on"
+
+  network_interfaces {
+    mac_address     = lookup(var.node_k3s, "mac_address")
+    nic_type        = "vmxnet3"
+    virtual_network = var.esxi_network_name
+  }
+
+  provisioner "remote-exec" {
+    inline = [ # this puts the kube config into the user's home directory
+      "sudo cp /etc/rancher/k3s/k3s.yaml k3s.yaml; sudo chown ${var.ssh_username}:${var.ssh_username} k3s.yaml"
+    ]
+
+    connection {
+      type        = "ssh"
+      user        = var.ssh_username
+      private_key = var.ssh_private_key
+      host        = esxi_guest.k3s.ip_address
+    }
+  }
+}
+
+# this copies the kube config to the terraform runner
+resource "null_resource" "get-k3s-config" {
+  depends_on = [esxi_guest.k3s]
+
+  provisioner "local-exec" {
+    command = <<EOC
+      echo '${var.ssh_private_key}' > private.key; 
+      chmod 400 private.key;
+      scp -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -i private.key ${var.ssh_username}@${esxi_guest.k3s.ip_address}:k3s.yaml .
+   EOC
+  }
+}
+
+# this provides the kube config as an output
+module "k3s-config" {
+  depends_on = [null_resource.get-k3s-config]
+
+  source  = "matti/resource/shell"
+  command = "cat k3s.yaml"
+}

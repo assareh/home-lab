@@ -1,4 +1,4 @@
-job "das-autoscaler" {
+job "nomad-autoscaler" {
   datacenters = ["dc1"]
 
   priority = 5
@@ -48,8 +48,8 @@ EOH
       }
 
       resources {
-        cpu    = 1322
-        memory = 146
+        cpu    = 57
+        memory = 166
       }
 
       scaling "cpu" {

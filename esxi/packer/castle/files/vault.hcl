@@ -16,7 +16,13 @@ listener "tcp" {
   proxy_protocol_behavior = "use_always"
 }
 
-storage "consul" {}
+storage "consul" {
+  address       = "127.0.0.1:8501"
+  scheme        = "https"
+  tls_ca_file   = "/etc/vault.d/consul-agent-ca.pem"
+  tls_cert_file = "/etc/vault.d/dc1-client-consul.pem"
+  tls_key_file  = "/etc/vault.d/dc1-client-consul-key.pem"
+}
 
 telemetry {
   disable_hostname          = true

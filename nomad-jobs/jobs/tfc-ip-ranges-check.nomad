@@ -41,15 +41,17 @@ EOF
 set -x
 
 IP_RANGES=`(curl --silent \
-  -H "If-Modified-Since: Thu, 23 Sep 2021 15:10:05 GMT" \
+  -H "If-Modified-Since: Thu, 7 Oct 2021 15:10:05 GMT" \
   https://app.terraform.io/api/meta/ip-ranges | jq -r .vcs)`
 
-if [ IP_RANGES ]
+if [ -z "${IP_RANGES}" ];
 then
-        curl -X POST -d "Body=$IP_RANGES" \
-        -d "From=$TWILIO_NUMBER" -d "To=$SENDTO_NUMBER" \
-        "https://api.twilio.com/2010-04-01/Accounts/$ACCOUNT_SID/Messages" \
-        -u "$ACCOUNT_SID:$AUTH_TOKEN"
+  echo 'No change!'
+else
+  curl -X POST -d "Body=Terraform Cloud VCS source IPs: $IP_RANGES" \
+  -d "From=$TWILIO_NUMBER" -d "To=$SENDTO_NUMBER" \
+  "https://api.twilio.com/2010-04-01/Accounts/$ACCOUNT_SID/Messages" \
+  -u "$ACCOUNT_SID:$AUTH_TOKEN"
 fi
 EOS
       }

@@ -5,8 +5,9 @@ job "traefik" {
 
   group "traefik" {
     shutdown_delay = "5s"
+
     vault {
-      policies = ["traefik"]
+      policies = ["consul-client-tls", "traefik"]
     }
 
     volume "traefik" {
@@ -121,6 +122,11 @@ job "traefik" {
     task "keepalived" {
       driver = "docker"
 
+      lifecycle {
+        hook    = "poststart"
+        sidecar = true
+      }
+
       env {
         KEEPALIVED_INTERFACE     = "ens160"
         KEEPALIVED_ROUTER_ID     = "52"
@@ -141,7 +147,7 @@ job "traefik" {
 
       resources {
         cpu    = 57
-        memory = 11
+        memory = 10
       }
 
       scaling "cpu" {
@@ -183,7 +189,7 @@ job "traefik" {
         network_mode = "host"
 
         volumes = [
-          "local/traefik.toml:/etc/traefik/traefik.toml",
+          "local/traefik.toml:/etc/traefik/traefik.toml"
         ]
       }
 
@@ -247,6 +253,9 @@ job "traefik" {
 [log]
   filePath = "/opt/traefik/traefik-{{ env "attr.unique.network.ip-address" }}.log"
   
+[pilot]
+  token = "${pilot_token}"
+
 # Enable Consul Catalog configuration backend.
 [providers.consulCatalog]
     connectAware     = true
@@ -254,8 +263,13 @@ job "traefik" {
     prefix           = "traefik"
 
     [providers.consulCatalog.endpoint]
-      address = "127.0.0.1:8500"
-      scheme  = "http"
+      address = "localhost:8501"
+      scheme  = "https"
+
+      [providers.consulCatalog.endpoint.tls]
+      ca      = "secrets/ca.pem"
+      cert    = "secrets/cert.pem"
+      key     = "secrets/key.pem"
 
 [serversTransport]
 # finish rolling out Connect or add my CA to disable this
@@ -268,15 +282,42 @@ EOF
 
       template {
         destination = "secrets/gce-service-account.json"
-        perms       = "755"
+        perms       = "400"
         data        = <<EOF
 {{with secret "nomad/data/gcloud"}}{{.Data.data.GCE_SERVICE_ACCOUNT}}{{end}}
 EOF
       }
 
+      template {
+        destination = "secrets/ca.pem"
+        perms       = "644"
+        data        = <<EOF
+{{ with secret "pki/int_consul/issue/dc1-client" "common_name=traefik.client.dc1.consul" }}
+{{ .Data.issuing_ca }}{{ end }}
+EOF
+      }
+
+      template {
+        destination = "secrets/cert.pem"
+        perms       = "644"
+        data        = <<EOF
+{{ with secret "pki/int_consul/issue/dc1-client" "common_name=traefik.client.dc1.consul" }}
+{{ .Data.certificate }}{{ end }}
+EOF
+      }
+
+      template {
+        destination = "secrets/key.pem"
+        perms       = "444"
+        data        = <<EOF
+{{ with secret "pki/int_consul/issue/dc1-client" "common_name=traefik.client.dc1.consul" }}
+{{ .Data.private_key }}{{ end }}
+EOF
+      }
+
       resources {
         cpu    = 57
-        memory = 41
+        memory = 52
       }
 
       scaling "cpu" {

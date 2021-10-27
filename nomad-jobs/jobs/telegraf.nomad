@@ -4,7 +4,7 @@ job "telegraf" {
 
   group "telegraf" {
     vault {
-      policies = ["telegraf"]
+      policies = ["consul-client-tls", "telegraf"]
     }
 
     task "telegraf" {
@@ -139,16 +139,47 @@ job "telegraf" {
   # no configuration required
 
 [[inputs.consul]]
-  address = "localhost:8500"
-  scheme = "http"
+  address = "localhost:8501"
+  datacenter = "dc1"
+  tls_ca = "{{ env "NOMAD_SECRETS_DIR" }}/ca.pem"
+  tls_cert = "{{ env "NOMAD_SECRETS_DIR" }}/cert.pem"
+  tls_key = "{{ env "NOMAD_SECRETS_DIR" }}/key.pem"
+  scheme = "https"
 EOTC
 
         destination = "local/telegraf.conf"
       }
 
+      template {
+        destination = "secrets/ca.pem"
+        perms       = "644"
+        data        = <<EOF
+{{ with secret "pki/int_consul/issue/dc1-client" "common_name=telegraf.client.dc1.consul" }}
+{{ .Data.issuing_ca }}{{ end }}
+EOF
+      }
+
+      template {
+        destination = "secrets/cert.pem"
+        perms       = "644"
+        data        = <<EOF
+{{ with secret "pki/int_consul/issue/dc1-client" "common_name=telegraf.client.dc1.consul" }}
+{{ .Data.certificate }}{{ end }}
+EOF
+      }
+
+      template {
+        destination = "secrets/key.pem"
+        perms       = "444"
+        data        = <<EOF
+{{ with secret "pki/int_consul/issue/dc1-client" "common_name=telegraf.client.dc1.consul" }}
+{{ .Data.private_key }}{{ end }}
+EOF
+      }
+
       resources {
-        cpu    = 172
-        memory = 246
+        cpu    = 229
+        memory = 102
       }
 
       scaling "cpu" {

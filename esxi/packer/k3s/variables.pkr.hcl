@@ -1,12 +1,11 @@
 # Read the documentation for locals blocks here:
 # https://www.packer.io/docs/templates/hcl_templates/blocks/locals
 locals {
-  consul_gossip   = vault("/packer/data/consul", "gossip")
   esxi_password   = vault("/packer/data/esxi", "esxi_password")
   esxi_username   = vault("/packer/data/esxi", "esxi_username")
-  ssh_password    = vault("/packer/data/ubuntu", "nas")
+  ssh_password    = vault("/packer/data/ubuntu", "k3s")
   timestamp       = regex_replace(timestamp(), "[- TZ:]", "")
-  vm_name         = "NAS-${local.timestamp}"
+  vm_name         = "K3s-${local.timestamp}"
 }
 
 # All generated input variables will be of 'string' type as this is how Packer JSON
@@ -16,11 +15,6 @@ locals {
 
 # Read the documentation for variable blocks here:
 # https://www.packer.io/docs/templates/hcl_templates/blocks/variable
-variable "consul_version" {
-  type    = string
-  default = "1.10.2"
-}
-
 variable "esxi_host" {
   type    = string
   default = "esxi.local"
@@ -43,15 +37,15 @@ variable "ssh_username" {
 
 variable "vm_cpu_num" {
   type    = string
-  default = "1"
+  default = "2"
 }
 
 variable "vm_disk_size" {
   type    = string
-  default = "20480"
+  default = "40960"
 }
 
 variable "vm_mem_size" {
   type    = string
-  default = "4096"
+  default = "8192"
 }

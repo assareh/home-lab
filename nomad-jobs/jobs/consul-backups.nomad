@@ -3,7 +3,7 @@ job "consul-backups" {
 
   group "consul-snapshot" {
     vault {
-      policies = ["consul-snapshot-agent"]
+      policies = ["consul-client-tls", "consul-snapshot-agent"]
     }
 
     volume "consul_snapshots" {
@@ -29,7 +29,7 @@ job "consul-backups" {
 
       resources {
         cpu    = 57
-        memory = 29
+        memory = 27
       }
 
       scaling "cpu" {
@@ -63,6 +63,33 @@ job "consul-backups" {
       }
 
       template {
+        destination = "secrets/ca.pem"
+        perms       = "644"
+        data        = <<EOF
+{{ with secret "pki/int_consul/issue/dc1-client" "common_name=consul-snapshot-agent.client.dc1.consul" }}
+{{ .Data.issuing_ca }}{{ end }}
+EOF
+      }
+
+      template {
+        destination = "secrets/cert.pem"
+        perms       = "644"
+        data        = <<EOF
+{{ with secret "pki/int_consul/issue/dc1-client" "common_name=consul-snapshot-agent.client.dc1.consul" }}
+{{ .Data.certificate }}{{ end }}
+EOF
+      }
+
+      template {
+        destination = "secrets/key.pem"
+        perms       = "444"
+        data        = <<EOF
+{{ with secret "pki/int_consul/issue/dc1-client" "common_name=consul-snapshot-agent.client.dc1.consul" }}
+{{ .Data.private_key }}{{ end }}
+EOF
+      }
+
+      template {
         destination = "secrets/consul-agent.env"
         env         = true
 
@@ -75,7 +102,11 @@ EOF
         data        = <<EOF
 {
   "snapshot_agent": {
+    "http_addr": "https://consul.service.consul:8501",
     "datacenter": "dc1",
+    "ca_file": "{{ env "NOMAD_SECRETS_DIR" }}/ca.pem",
+    "cert_file": "{{ env "NOMAD_SECRETS_DIR" }}/cert.pem",
+    "key_file": "{{ env "NOMAD_SECRETS_DIR" }}/key.pem",
     "snapshot": {
       "interval": "24h",
       "retain": 30

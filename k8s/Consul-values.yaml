@@ -1,0 +1,43 @@
+global:
+  name: consul
+  datacenter: dc2
+  image: 'hashicorp/consul-enterprise:1.10.3-ent'
+  tls:
+    enabled: true
+    caCert:
+      secretName: consul-federation
+      secretKey: caCert
+    caKey:
+      secretName: consul-federation
+      secretKey: caKey
+  federation:
+    enabled: true
+  gossipEncryption:
+    secretName: consul-federation
+    secretKey: gossipEncryptionKey
+server:
+  extraConfig: |
+    {
+      "log_level": "DEBUG",
+      "primary_datacenter": "dc1",
+      "primary_gateways": ["192.168.0.104:9100"]
+    }
+  replicas: 1
+  securityContext:
+    runAsNonRoot: false
+    runAsGroup: 0
+    runAsUser: 0
+    fsGroup: 0
+  enterpriseLicense:
+    secretName: 'consul-license'
+    secretKey: 'key'
+ui:
+  enabled: true
+connectInject:
+  enabled: true
+controller:
+  enabled: true
+meshGateway:
+  enabled: true
+
+

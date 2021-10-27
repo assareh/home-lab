@@ -9,6 +9,8 @@ Storage is provided via Florian Apolloner's [NFS CSI Plugin](https://gitlab.com/
 ## Notes
 There is Terraform code here if you'd like to manage these with Terraform and the Nomad provider, however this is not required. Please exercise caution as deleting an external volume will destroy the data on that volume.
 
+To use the QEMU driver, you'll have to expose HW assisted virtualization on the Nomad client VMs in ESXi.
+
 ### Best practices
 - Explicitly specify the tag version for more controlled updates/upgrades.
 
