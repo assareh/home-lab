@@ -1,0 +1,42 @@
+stages:
+  - build
+
+image: alpine
+
+build_castle_image:
+  stage: build
+  artifacts:
+    paths:
+      - castle/packer.log
+  variables:
+    VAULT_AUTH_ROLE: "packer"
+  script:
+    
+    # download packer and vault
+    - echo "Fetching Packer..."
+    - wget https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip
+    - unzip packer_${PACKER_VERSION}_linux_amd64.zip
+    - chmod +x packer
+    - echo "Fetching Vault..."
+    - wget https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip
+    - unzip vault_${VAULT_VERSION}_linux_amd64.zip
+    - chmod +x vault
+
+    # install packages for mkisofs and curl for later
+    - apk add xorriso curl
+
+    # log in to vault
+    - export VAULT_TOKEN="$(./vault write -field=token auth/jwt/login role=$VAULT_AUTH_ROLE jwt=$CI_JOB_JWT)"
+
+    # packer the template, turning on logging
+    - echo "Building Castle template..."
+    - export PACKER_LOG_PATH=packer.log
+    - export PACKER_LOG=1
+    - cd castle
+    - ../packer build .
+    
+    # capture the template name in VMware
+    - TEMPLATE=`(tail -n 20 packer.log | grep 'VM files in directory' | grep -o -E '([^\/]+$)')`
+
+    # send it to the channel
+    - curl -X POST -H 'Content-type:application/json' --data '{"text":"'"$TEMPLATE"'"}' "$SLACK_WEBHOOK_URL"
