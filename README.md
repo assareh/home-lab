@@ -168,7 +168,7 @@ vault write auth/approle/role/bootstrap \
   secret_id_ttl=420s \
   token_bound_cidrs="192.168.0.101/32","192.168.0.102/31","192.168.0.104/31","192.168.0.106/32" \
   token_period=259200 \
-  token_policies="consul-server-tls,gcp-kms,nomad-server,pki"
+  token_policies="consul-client-tls,consul-server-tls,gcp-kms,nomad-server,pki"
 ```
 Please check the [docs](https://www.vaultproject.io/api/auth/approle#create-update-approle) to understand what the above parameters do.
 

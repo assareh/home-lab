@@ -1,13 +1,5 @@
 # Full configuration options can be found at https://www.nomadproject.io/docs/configuration
 
-bind_addr = "0.0.0.0"
-
-data_dir = "/opt/nomad"
-
-leave_on_terminate = true
-
-log_level = "INFO"
-
 advertise {
   http = "{{ GetInterfaceIP `ens160` }}"
   rpc  = "{{ GetInterfaceIP `ens160` }}"
@@ -24,9 +16,16 @@ autopilot {
   server_stabilization_time = "10s"
 }
 
+bind_addr = "0.0.0.0"
+
 client {
   enabled    = true
   node_class = "castle"
+
+  reserved {
+    cpu    = "200"
+    memory = "512"
+  }
 }
 
 consul {
@@ -36,6 +35,12 @@ consul {
   key_file  = "/etc/vault.d/dc1-client-consul-key.pem"
   ssl       = true
 }
+
+data_dir = "/opt/nomad"
+
+leave_on_terminate = true  
+
+log_level = "INFO" 
 
 plugin "containerd-driver" {
   config {

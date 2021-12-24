@@ -1,3 +1,5 @@
+# Full configuration options can be found at https://www.consul.io/docs/agent/options.html
+
 auto_encrypt = {
   tls = true
 }
@@ -28,6 +30,10 @@ ports {
 primary_datacenter = "dc1"
 
 retry_join = ["consul.service.consul"]
+
+telemetry {
+  disable_compat_1.9 = true
+}
 
 verify_incoming = false
 

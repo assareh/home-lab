@@ -38,6 +38,8 @@ source "vmware-iso" "ubuntu-20-castle" {
   vmx_data = {
     "virtualhw.version" = "17"
   }
+  # vmx_data_post may not still be required, but added to ensure 
+  # cd drives are removed and not booted from after provisioning
   vmx_data_post = {
     "bios.bootorder"        = "hdd"
     "ide0:0.startConnected" = "FALSE"
@@ -120,6 +122,14 @@ build {
       "sudo mkdir -p /opt/nomad/plugins",
       "curl -OL https://github.com/Roblox/nomad-driver-containerd/releases/download/v${var.containerd_version}/containerd-driver",
       "sudo mv containerd-driver /opt/nomad/plugins/."
+    ]
+  }
+
+provisioner "shell" {
+    inline = [
+      "echo \"deb http://packages.azlux.fr/debian/ buster main\" | sudo tee /etc/apt/sources.list.d/azlux.list",
+      "wget -qO - https://azlux.fr/repo.gpg.key | sudo apt-key add -",
+      "sudo apt-get update && sudo apt-get install docker-ctop"
     ]
   }
 
