@@ -153,6 +153,7 @@ resource "esxi_virtual_disk" "nas_disk2" {
   }
 }
 
+# change this to for_each
 resource "esxi_guest" "k3s" {
   guest_name    = lookup(var.node_k3s, "name")
   disk_store    = var.esxi_datastore
