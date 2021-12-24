@@ -1,18 +1,18 @@
 job "consul-ingress-gateway" {
   datacenters = ["dc1"]
-
-  group "ingress-group" {
+  
+  group "consul-ingress-gateway" {
     network {
       mode = "bridge"
 
-      port "inbound" {
-        static = 8010
+      port "ingress" {
+        static = 8080
       }
     }
 
     service {
-      name = "ingress-gateway"
-      port = "inbound"
+      name = "dc1-ingress-gateway"
+      port = "ingress"
 
       check {
         type     = "tcp"
@@ -33,11 +33,11 @@ job "consul-ingress-gateway" {
             # Additional options are documented at
             # https://www.nomadproject.io/docs/job-specification/gateway#ingress-parameters
             listener {
-              port     = 8010
-              protocol = "http"
+              port     = 8080
+              protocol = "tcp"
+
               service {
-                name  = "web-dc2"
-                hosts = ["*"]
+                name = "whoami"
               }
             }
           }
