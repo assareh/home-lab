@@ -1,3 +1,8 @@
+variable "domain" {
+  type    = string
+  default = "hashidemos.io"
+}
+
 job "whoami" {
   datacenters = ["dc1"]
 
@@ -23,7 +28,7 @@ job "whoami" {
         "traefik.enable=true",
         "traefik.consulcatalog.connect=true",
         "traefik.http.routers.whoami.entryPoints=websecure",
-        "traefik.http.routers.whoami.rule=Host(`whoami.hashidemos.io`)",
+        "traefik.http.routers.whoami.rule=Host(`whoami.${var.domain}`)",
         "traefik.http.routers.whoami.tls=true",
       ]
 
@@ -49,7 +54,7 @@ job "whoami" {
       }
 
       resources {
-        cpu    = 100
+        cpu    = 35
         memory = 128
       }
     }

@@ -21,8 +21,8 @@ job "internet-monitoring" {
       }
 
       resources {
-        cpu    = 114
-        memory = 25
+        cpu    = 20
+        memory = 27
       }
 
       service {
@@ -50,8 +50,8 @@ job "internet-monitoring" {
         max     = 500
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -66,8 +66,8 @@ job "internet-monitoring" {
         max     = 512
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "max" {
             strategy "app-sizing-max" {}
@@ -96,8 +96,8 @@ job "internet-monitoring" {
       }
 
       resources {
-        cpu    = 57
-        memory = 25
+        cpu    = 100
+        memory = 23
       }
 
       template {
@@ -174,8 +174,8 @@ EOH
         max     = 500
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -191,8 +191,8 @@ EOH
         max     = 512
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "max" {
             strategy "app-sizing-max" {}

@@ -29,38 +29,8 @@ job "storage-controller" {
       }
 
       resources {
-        cpu    = 57
-        memory = 25
-      }
-
-      scaling "cpu" {
-        enabled = true
-        max     = 1000
-
-        policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
-
-          check "95pct" {
-            strategy "app-sizing-percentile" {
-              percentile = "95"
-            }
-          }
-        }
-      }
-
-      scaling "mem" {
-        enabled = true
-        max     = 512
-
-        policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
-
-          check "max" {
-            strategy "app-sizing-max" {}
-          }
-        }
+        cpu    = 20
+        memory = 27
       }
     }
   }

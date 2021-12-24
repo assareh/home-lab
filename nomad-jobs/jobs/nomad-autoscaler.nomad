@@ -8,7 +8,7 @@ job "nomad-autoscaler" {
       driver = "docker"
 
       config {
-        image   = "hashicorp/nomad-autoscaler-enterprise:0.3.3"
+        image   = "hashicorp/nomad-autoscaler-enterprise:0.3.4"
         command = "bin/nomad-autoscaler"
 
         args = [
@@ -48,7 +48,7 @@ EOH
       }
 
       resources {
-        cpu    = 57
+        cpu    = 20
         memory = 166
       }
 
@@ -57,8 +57,8 @@ EOH
         max     = 2000
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -73,8 +73,8 @@ EOH
         max     = 1024
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "max" {
             strategy "app-sizing-max" {}

@@ -1,3 +1,8 @@
+variable "domain" {
+  type    = string
+  default = "hashidemos.io"
+}
+
 job "jenkins" {
   datacenters = ["dc1"]
 
@@ -51,7 +56,7 @@ job "jenkins" {
           "dnsmasq.cname=true",
           "traefik.enable=true",
           "traefik.http.routers.jenkins.entryPoints=websecure",
-          "traefik.http.routers.jenkins.rule=Host(`jenkins.hashidemos.io`)",
+          "traefik.http.routers.jenkins.rule=Host(`jenkins.${var.domain}`)",
           "traefik.http.routers.jenkins.tls=true",
         ]
 
@@ -69,8 +74,8 @@ job "jenkins" {
       }
 
       resources {
-        cpu    = 2400
-        memory = 768
+        cpu    = 800
+        memory = 882
       }
 
       scaling "cpu" {
@@ -78,8 +83,8 @@ job "jenkins" {
         max     = 2400
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -94,8 +99,8 @@ job "jenkins" {
         max     = 2048
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "max" {
             strategy "app-sizing-max" {}

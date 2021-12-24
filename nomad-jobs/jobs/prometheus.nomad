@@ -1,3 +1,8 @@
+variable "domain" {
+  type    = string
+  default = "hashidemos.io"
+}
+
 job "prometheus" {
   datacenters = ["dc1"]
 
@@ -213,7 +218,7 @@ EOF
       }
 
       resources {
-        cpu    = 500
+        cpu    = 150
         memory = 300
       }
 
@@ -222,8 +227,8 @@ EOF
         max     = 500
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -238,8 +243,8 @@ EOF
         max     = 512
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "max" {
             strategy "app-sizing-max" {}
@@ -255,7 +260,7 @@ EOF
           "dnsmasq.cname=true",
           "traefik.enable=true",
           "traefik.http.routers.prometheus.entryPoints=websecure",
-          "traefik.http.routers.prometheus.rule=Host(`prometheus.hashidemos.io`)",
+          "traefik.http.routers.prometheus.rule=Host(`prometheus.${var.domain}`)",
           "traefik.http.routers.prometheus.tls=true",
         ]
 

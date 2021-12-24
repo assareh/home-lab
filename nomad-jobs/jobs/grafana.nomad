@@ -1,3 +1,8 @@
+variable "domain" {
+  type    = string
+  default = "hashidemos.io"
+}
+
 job "grafana" {
   datacenters = ["dc1"]
 
@@ -47,8 +52,8 @@ job "grafana" {
       }
 
       resources {
-        cpu    = 57
-        memory = 46
+        cpu    = 20
+        memory = 37
       }
 
       service {
@@ -59,7 +64,7 @@ job "grafana" {
           "dnsmasq.cname=true",
           "traefik.enable=true",
           "traefik.http.routers.grafana.entryPoints=websecure",
-          "traefik.http.routers.grafana.rule=Host(`grafana.hashidemos.io`)",
+          "traefik.http.routers.grafana.rule=Host(`grafana.${var.domain}`)",
           "traefik.http.routers.grafana.tls=true",
         ]
 
@@ -84,8 +89,8 @@ job "grafana" {
         max     = 1500
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -100,8 +105,8 @@ job "grafana" {
         max     = 2048
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "max" {
             strategy "app-sizing-max" {}

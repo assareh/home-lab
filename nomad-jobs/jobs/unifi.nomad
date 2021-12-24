@@ -1,3 +1,13 @@
+variable "domain" {
+  type    = string
+  default = "hashidemos.io"
+}
+
+variable "vault_cert_role" {
+  type    = string
+  default = "hashidemos-io"
+}
+
 job "unifi" {
   datacenters = ["dc1"]
 
@@ -45,7 +55,7 @@ job "unifi" {
       }
 
       config {
-        image = "jacobalberty/unifi:v6.4.54"
+        image = "jacobalberty/unifi:v6.5.54"
         ports = ["cmdctrl", "https", "stun"]
         volumes = [
           "secrets/certs:/unifi/cert",
@@ -89,7 +99,7 @@ job "unifi" {
           "dnsmasq.cname=true",
           "traefik.enable=true",
           "traefik.http.routers.unifi.entryPoints=websecure",
-          "traefik.http.routers.unifi.rule=Host(`unifi.hashidemos.io`)",
+          "traefik.http.routers.unifi.rule=Host(`unifi.${var.domain}`)",
           "traefik.http.routers.unifi.tls=true",
           "traefik.http.services.unifi.loadbalancer.server.scheme=https",
         ]
@@ -115,36 +125,36 @@ job "unifi" {
       template {
         destination = "secrets/certs/cert.pem"
         perms       = "640"
-        data        = <<-EOF
-          {{ $ip_sans := printf "ip_sans=%s" (env "NOMAD_IP_https") }}
-          {{ with secret "pki/intermediate/issue/hashidemos-io" "common_name=unifi.service.consul" "alt_names=unifi.hashidemos.io" $ip_sans }}
-          {{ .Data.certificate }}{{ end }}
+        data        = <<EOF
+{{ $ip_sans := printf "ip_sans=%s" (env "NOMAD_IP_https") }}
+{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=unifi.service.consul" "alt_names=unifi.${var.domain}" $ip_sans }}
+{{ .Data.certificate }}{{ end }}
           EOF
       }
 
       template {
         destination = "secrets/certs/privkey.pem"
         perms       = "400"
-        data        = <<-EOF
-          {{ $ip_sans := printf "ip_sans=%s" (env "NOMAD_IP_https") }}
-          {{ with secret "pki/intermediate/issue/hashidemos-io" "common_name=unifi.service.consul" "alt_names=unifi.hashidemos.io" $ip_sans }}
-          {{ .Data.private_key }}{{ end }}
+        data        = <<EOF
+{{ $ip_sans := printf "ip_sans=%s" (env "NOMAD_IP_https") }}
+{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=unifi.service.consul" "alt_names=unifi.${var.domain}" $ip_sans }}
+{{ .Data.private_key }}{{ end }}
           EOF
       }
 
       template {
         destination = "secrets/certs/chain.pem"
         perms       = "640"
-        data        = <<-EOF
-          {{ $ip_sans := printf "ip_sans=%s" (env "NOMAD_IP_https") }}
-          {{ with secret "pki/intermediate/issue/hashidemos-io" "common_name=unifi.service.consul" "alt_names=unifi.hashidemos.io" $ip_sans }}
-          {{ .Data.issuing_ca }}{{ end }}
+        data        = <<EOF
+{{ $ip_sans := printf "ip_sans=%s" (env "NOMAD_IP_https") }}
+{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=unifi.service.consul" "alt_names=unifi.${var.domain}" $ip_sans }}
+{{ .Data.issuing_ca }}{{ end }}
           EOF
       }
 
       resources {
-        cpu    = 172
-        memory = 1026
+        cpu    = 60
+        memory = 1178
       }
 
       scaling "cpu" {
@@ -152,8 +162,8 @@ job "unifi" {
         max     = 2000
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -168,8 +178,8 @@ job "unifi" {
         max     = 2048
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "max" {
             strategy "app-sizing-max" {}

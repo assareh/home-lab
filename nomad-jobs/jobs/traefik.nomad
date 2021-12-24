@@ -1,3 +1,23 @@
+variable "domain" {
+  type    = string
+  default = "hashidemos.io"
+}
+
+variable "email" {
+  type    = string
+  default = "andy@hashidemos.io"
+}
+
+variable "google_project" {
+  type    = string
+  default = "hashidemos-io-dns"
+}
+
+variable "subnet_cidr" {
+  type    = string
+  default = "192.168.0"
+}
+
 job "traefik" {
   datacenters = ["dc1"]
 
@@ -33,37 +53,37 @@ job "traefik" {
     }
 
     network { # should put any ports that are entrypoints below here
-      port "https" {
+      port "websecure" {
         static = 443
       }
 
-      port "http" {
+      port "web" {
         static = 80
       }
 
-      port "api" {
-        static = 8081
-      }
+      port "traefik" {}
     }
 
     service {
-      name = "traefik-dashboard"
-      port = "api"
+      name = "traefik"
+      port = "traefik"
 
       tags = [
         "traefik.enable=true",
-        "traefik.http.routers.traefik.entryPoints=websecure",
-        "traefik.http.routers.traefik.rule=Host(`traefik.hashidemos.io`)",
-        "traefik.http.routers.traefik.tls=true",
+
         "traefik.http.routers.traefik.tls.certresolver=letsencrypt",
-        "traefik.http.routers.traefik.tls.domains[0].main=*.hashidemos.io",
-        "traefik.http.routers.traefik.tls.domains[0].sans=hashidemos.io",
+        "traefik.http.routers.traefik.tls.domains[0].main=*.${var.domain}",
+
+        "traefik.http.routers.traefik.entryPoints=websecure",
+        "traefik.http.routers.traefik.tls=true",
+        "traefik.http.routers.traefik.service=api@internal",
+        "traefik.http.routers.traefik.rule=Host(`traefik.${var.domain}`) && PathPrefix(`/api`, `/dashboard`)",
       ]
 
       check {
         name     = "alive"
         type     = "tcp"
-        port     = "api"
+        port     = "traefik"
         interval = "10s"
         timeout  = "2s"
 
@@ -78,13 +98,13 @@ job "traefik" {
     }
 
     service {
-      name = "traefik-http"
-      port = "http"
+      name = "traefik-web"
+      port = "web"
 
       check {
         name     = "alive"
         type     = "tcp"
-        port     = "http"
+        port     = "web"
         interval = "10s"
         timeout  = "2s"
 
@@ -99,22 +119,29 @@ job "traefik" {
     }
 
     service {
-      name = "traefik"
-      port = "https"
+      name = "traefik-websecure"
+      port = "websecure"
 
       check {
-        name     = "alive"
-        type     = "tcp"
-        port     = "https"
-        interval = "10s"
-        timeout  = "2s"
+        name            = "traefik: consul provider ready"
+        type            = "http"
+        protocol        = "https"
+        port            = "websecure"
+        path            = "/api/http/services/traefik@consulcatalog"
+        interval        = "30s"
+        timeout         = "5s"
+        tls_skip_verify = true
+
+        header {
+          Host = ["traefik.${var.domain}"]
+        }
 
         success_before_passing   = "3"
         failures_before_critical = "3"
 
         check_restart {
           limit = 3
-          grace = "60s"
+          grace = "180s"
         }
       }
     }
@@ -132,7 +159,7 @@ job "traefik" {
         KEEPALIVED_ROUTER_ID     = "52"
         KEEPALIVED_STATE         = "BACKUP"
         KEEPALIVED_UNICAST_PEERS = ""
-        KEEPALIVED_VIRTUAL_IPS   = "192.168.0.200"
+        KEEPALIVED_VIRTUAL_IPS   = "${var.subnet_cidr}.200"
       }
 
       config {
@@ -146,38 +173,8 @@ job "traefik" {
       }
 
       resources {
-        cpu    = 57
+        cpu    = 20
         memory = 10
-      }
-
-      scaling "cpu" {
-        enabled = true
-        max     = 500
-
-        policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
-
-          check "95pct" {
-            strategy "app-sizing-percentile" {
-              percentile = "95"
-            }
-          }
-        }
-      }
-
-      scaling "mem" {
-        enabled = true
-        max     = 512
-
-        policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
-
-          check "max" {
-            strategy "app-sizing-max" {}
-          }
-        }
       }
     }
 
@@ -185,7 +182,7 @@ job "traefik" {
       driver = "docker"
 
       config {
-        image        = "traefik:v2.5.0"
+        image        = "traefik:v2.5.4"
         network_mode = "host"
 
         volumes = [
@@ -199,7 +196,7 @@ job "traefik" {
       }
 
       env {
-        GCE_PROJECT              = "hashidemos-io-dns"
+        GCE_PROJECT              = "${var.google_project}"
         GCE_SERVICE_ACCOUNT_FILE = "secrets/gce-service-account.json"
         TZ                       = "US/Los_Angeles"
       }
@@ -214,7 +211,7 @@ job "traefik" {
   insecure  = true
 
 [certificatesResolvers.letsencrypt.acme]
-  email = "andy@hashidemos.io"
+  email = "andy@${var.email}"
   storage = "/opt/traefik/acme.json"
   # use staging server for testing
   # caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
@@ -224,7 +221,7 @@ job "traefik" {
 
 [entryPoints]
 [entryPoints.web]
-  address = ":{{env "NOMAD_PORT_http"}}"
+  address = ":{{env "NOMAD_PORT_web"}}"
 
   [entryPoints.web.http]
     [entryPoints.web.http.redirections]
@@ -233,13 +230,13 @@ job "traefik" {
         scheme = "https"
 
 [entryPoints.websecure]
-  address = ":{{env "NOMAD_PORT_https"}}"
+  address = ":{{env "NOMAD_PORT_websecure"}}"
 
   [entryPoints.websecure.http.tls]
     certResolver = "letsencrypt"
 
 [entryPoints.traefik]
-  address = ":{{env "NOMAD_PORT_api"}}"
+  address = ":{{env "NOMAD_PORT_traefik"}}"
 
 # [entryPoints.vmrc902t]
 #   address = ":902/tcp"
@@ -252,9 +249,9 @@ job "traefik" {
 
 [log]
   filePath = "/opt/traefik/traefik-{{ env "attr.unique.network.ip-address" }}.log"
-  
-[pilot]
-  token = "${pilot_token}"
+  # level    = "DEBUG"
+
+# ping
 
 # Enable Consul Catalog configuration backend.
 [providers.consulCatalog]
@@ -316,38 +313,8 @@ EOF
       }
 
       resources {
-        cpu    = 57
+        cpu    = 20
         memory = 52
-      }
-
-      scaling "cpu" {
-        enabled = true
-        max     = 500
-
-        policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
-
-          check "95pct" {
-            strategy "app-sizing-percentile" {
-              percentile = "95"
-            }
-          }
-        }
-      }
-
-      scaling "mem" {
-        enabled = true
-        max     = 512
-
-        policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
-
-          check "max" {
-            strategy "app-sizing-max" {}
-          }
-        }
       }
     }
   }

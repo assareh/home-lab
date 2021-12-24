@@ -34,9 +34,10 @@ job "consul-ingress-gateway" {
             # https://www.nomadproject.io/docs/job-specification/gateway#ingress-parameters
             listener {
               port     = 8010
-              protocol = "tcp"
+              protocol = "http"
               service {
-                name = "web-dc2"
+                name  = "web-dc2"
+                hosts = ["*"]
               }
             }
           }
@@ -47,7 +48,7 @@ job "consul-ingress-gateway" {
 
         sidecar_task {
           resources {
-            cpu    = 100
+            cpu    = 35
             memory = 128
           }
         }

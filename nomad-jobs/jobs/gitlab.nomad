@@ -1,3 +1,18 @@
+variable "domain" {
+  type    = string
+  default = "hashidemos.io"
+}
+
+variable "gitlab_health_check_token" {
+  type    = string
+  default = ""
+}
+
+variable "vault_cert_role" {
+  type    = string
+  default = "hashidemos-io"
+}
+
 job "gitlab" {
   datacenters = ["dc1"]
 
@@ -9,6 +24,10 @@ job "gitlab" {
     network {
       port "https" {
         to = 443
+      }
+
+      port "registry_https" {
+        to = 5050
       }
     }
 
@@ -42,8 +61,8 @@ job "gitlab" {
       shutdown_delay = "5s"
 
       config {
-        image = "gitlab/gitlab-ee:13.11.1-ee.0"
-        ports = ["https"]
+        image = "gitlab/gitlab-ee:14.5.2-ee.0"
+        ports = ["https", "registry_https"]
         volumes = [
           "secrets/certs:/etc/gitlab/ssl",
         ]
@@ -72,7 +91,7 @@ job "gitlab" {
           "dnsmasq.cname=true",
           "traefik.enable=true",
           "traefik.http.routers.gitlab.entryPoints=websecure",
-          "traefik.http.routers.gitlab.rule=Host(`gitlab.hashidemos.io`)",
+          "traefik.http.routers.gitlab.rule=Host(`gitlab.${var.domain}`)",
           "traefik.http.routers.gitlab.tls=true",
           "traefik.http.services.gitlab.loadbalancer.server.scheme=https",
         ]
@@ -88,7 +107,7 @@ job "gitlab" {
 
           check_restart {
             limit = 3
-            grace = "180s"
+            grace = "300s"
           }
         }
 
@@ -97,7 +116,7 @@ job "gitlab" {
           type     = "http"
           interval = "10s"
           timeout  = "2s"
-          path     = "/-/readiness?token="
+          path     = "/-/readiness?token=${var.gitlab_health_check_token}"
           protocol = "https"
 
           success_before_passing   = "3"
@@ -105,7 +124,7 @@ job "gitlab" {
 
           check_restart {
             limit = 3
-            grace = "180s"
+            grace = "300s"
           }
         }
 
@@ -114,7 +133,7 @@ job "gitlab" {
           type     = "http"
           interval = "10s"
           timeout  = "2s"
-          path     = "/-/liveness?token="
+          path     = "/-/liveness?token=${var.gitlab_health_check_token}"
           protocol = "https"
 
           success_before_passing   = "3"
@@ -122,35 +141,81 @@ job "gitlab" {
 
           check_restart {
             limit = 3
-            grace = "180s"
+            grace = "300s"
+          }
+        }
+      }
+
+      service {
+        name = "gitlab-registry"
+        port = "registry_https"
+
+        tags = [
+          "dnsmasq.cname=true",
+          "traefik.enable=true",
+          "traefik.http.routers.gitlab-registry.entryPoints=websecure",
+          "traefik.http.routers.gitlab-registry.rule=Host(`gitlab-registry.${var.domain}`)",
+          "traefik.http.routers.gitlab-registry.tls=true",
+          "traefik.http.services.gitlab-registry.loadbalancer.server.scheme=https",
+        ]
+
+        check {
+          name     = "service: gitlab registry tcp check"
+          type     = "tcp"
+          interval = "10s"
+          timeout  = "2s"
+
+          success_before_passing   = "3"
+          failures_before_critical = "3"
+
+          check_restart {
+            limit = 3
+            grace = "300s"
+          }
+        }
+
+        check {
+          name     = "service: gitlab registry readiness check"
+          type     = "http"
+          interval = "10s"
+          timeout  = "2s"
+          path     = "/"
+          protocol = "https"
+
+          success_before_passing   = "3"
+          failures_before_critical = "3"
+
+          check_restart {
+            limit = 3
+            grace = "300s"
           }
         }
       }
 
       template {
-        destination = "secrets/certs/gitlab.hashidemos.io.crt"
+        destination = "secrets/certs/gitlab.${var.domain}.crt"
         perms       = "640"
-        data        = <<-EOF
-          {{ $ip_sans := printf "ip_sans=%s" (env "NOMAD_IP_https") }}
-          {{ with secret "pki/intermediate/issue/hashidemos-io" "common_name=gitlab.service.consul" "alt_names=gitlab.hashidemos.io" $ip_sans }}
-          {{ .Data.certificate }}{{ end }}
-          {{ with secret "pki/intermediate/issue/hashidemos-io" "common_name=gitlab.service.consul" "alt_names=gitlab.hashidemos.io" $ip_sans }}
-          {{ .Data.issuing_ca }}{{ end }}
+        data        = <<EOF
+{{ $ip_sans := printf "ip_sans=%s" (env "NOMAD_IP_https") }}
+{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=gitlab.service.consul" "alt_names=gitlab.${var.domain}" $ip_sans }}
+{{ .Data.certificate }}{{ end }}
+{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=gitlab.service.consul" "alt_names=gitlab.${var.domain}" $ip_sans }}
+{{ .Data.issuing_ca }}{{ end }}
           EOF
       }
 
       template {
-        destination = "secrets/certs/gitlab.hashidemos.io.key"
+        destination = "secrets/certs/gitlab.${var.domain}.key"
         perms       = "400"
-        data        = <<-EOF
-          {{ $ip_sans := printf "ip_sans=%s" (env "NOMAD_IP_https") }}
-          {{ with secret "pki/intermediate/issue/hashidemos-io" "common_name=gitlab.service.consul" "alt_names=gitlab.hashidemos.io" $ip_sans }}
-          {{ .Data.private_key }}{{ end }}
+        data        = <<EOF
+{{ $ip_sans := printf "ip_sans=%s" (env "NOMAD_IP_https") }}
+{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=gitlab.service.consul" "alt_names=gitlab.${var.domain}" $ip_sans }}
+{{ .Data.private_key }}{{ end }}
           EOF
       }
 
       resources {
-        cpu    = 1494
+        cpu    = 650
         memory = 4096
       }
 
@@ -159,8 +224,8 @@ job "gitlab" {
         max     = 4000
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -172,11 +237,11 @@ job "gitlab" {
 
       scaling "mem" {
         enabled = true
-        max     = 4096
+        max     = 6144
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "max" {
             strategy "app-sizing-max" {}

@@ -1,3 +1,8 @@
+variable "domain" {
+  type    = string
+  default = "hashidemos.io"
+}
+
 job "splunk" {
   datacenters = ["dc1"]
 
@@ -77,7 +82,7 @@ EOF
           "dnsmasq.cname=true",
           "traefik.enable=true",
           "traefik.http.routers.splunk.entryPoints=websecure",
-          "traefik.http.routers.splunk.rule=Host(`splunk.hashidemos.io`)",
+          "traefik.http.routers.splunk.rule=Host(`splunk.${var.domain}`)",
           "traefik.http.routers.splunk.tls=true",
         ]
 
@@ -123,7 +128,7 @@ EOF
       }
 
       resources {
-        cpu    = 287
+        cpu    = 250
         memory = 1024
       }
 
@@ -132,8 +137,8 @@ EOF
         max     = 2000
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -148,8 +153,8 @@ EOF
         max     = 1024
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "max" {
             strategy "app-sizing-max" {}

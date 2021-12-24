@@ -47,10 +47,31 @@ resource "nomad_job" "consul-ingress-gateway" {
 
 resource "nomad_job" "countdash" {
   jobspec = file("${path.module}/jobs/countdash.nomad")
+
+  hcl2 {
+    enabled  = true
+    allow_fs = true
+    vars = {
+      "domain" = var.domain,
+    }
+  }
+}
+
+resource "nomad_job" "whoami" {
+  jobspec = file("${path.module}/jobs/whoami.nomad")
+
+  hcl2 {
+    enabled  = true
+    allow_fs = true
+    vars = {
+      "domain" = var.domain,
+    }
+  }
 }
 
 resource "nomad_job" "fluentd" {
-  jobspec = file("${path.module}/jobs/fluentd.nomad")
+  jobspec    = file("${path.module}/jobs/fluentd.nomad")
+  depends_on = [nomad_job.docker_registry]
 }
 
 resource "nomad_external_volume" "gitlab_config" {
@@ -113,10 +134,43 @@ resource "nomad_external_volume" "gitlab_logs" {
 resource "nomad_job" "gitlab" {
   jobspec    = file("${path.module}/jobs/gitlab.nomad")
   depends_on = [nomad_external_volume.gitlab_config, nomad_external_volume.gitlab_data, nomad_external_volume.gitlab_logs]
+
+  hcl2 {
+    enabled  = true
+    allow_fs = true
+    vars = {
+      "domain"                    = var.domain,
+      "gitlab_health_check_token" = var.gitlab_health_check_token
+      "vault_cert_role"           = var.vault_cert_role,
+    }
+  }
+}
+
+resource "nomad_job" "gitlab-runner" {
+  jobspec = file("${path.module}/jobs/gitlab-runner.nomad")
+
+  hcl2 {
+    enabled  = true
+    allow_fs = true
+    vars = {
+      "dns_servers"     = var.dns_servers,
+      "domain"          = var.domain,
+      "vault_cert_role" = var.vault_cert_role,
+    }
+  }
 }
 
 resource "nomad_job" "google-dns-updater" {
   jobspec = file("${path.module}/jobs/google-dns-updater.nomad")
+
+  hcl2 {
+    enabled  = true
+    allow_fs = true
+    vars = {
+      "domain"         = var.domain,
+      "google_project" = var.google_project,
+    }
+  }
 }
 
 resource "nomad_external_volume" "grafana_etc" {
@@ -160,6 +214,14 @@ resource "nomad_external_volume" "grafana_lib" {
 resource "nomad_job" "grafana" {
   jobspec    = file("${path.module}/jobs/grafana.nomad")
   depends_on = [nomad_external_volume.grafana_etc, nomad_external_volume.grafana_lib]
+
+  hcl2 {
+    enabled  = true
+    allow_fs = true
+    vars = {
+      "domain" = var.domain,
+    }
+  }
 }
 
 resource "nomad_external_volume" "homebridge" {
@@ -183,13 +245,14 @@ resource "nomad_external_volume" "homebridge" {
 
 resource "nomad_job" "homebridge" {
   jobspec    = file("${path.module}/jobs/homebridge.nomad")
-  depends_on = [nomad_external_volume.homebridge]
+  depends_on = [nomad_external_volume.homebridge, nomad_job.docker_registry]
 
   hcl2 {
     enabled  = true
     allow_fs = true
     vars = {
-      "docker_password" = var.docker_password,
+      "domain"          = var.domain,
+      "vault_cert_role" = var.vault_cert_role,
     }
   }
 }
@@ -244,6 +307,14 @@ resource "nomad_external_volume" "jenkins" {
 resource "nomad_job" "jenkins" {
   jobspec    = file("${path.module}/jobs/jenkins.nomad")
   depends_on = [nomad_external_volume.jenkins]
+
+  hcl2 {
+    enabled  = true
+    allow_fs = true
+    vars = {
+      "domain" = var.domain,
+    }
+  }
 }
 
 resource "nomad_external_volume" "nomad_snapshots" {
@@ -280,6 +351,15 @@ resource "nomad_job" "nomad-backups" {
 
 resource "nomad_job" "pi-hole" {
   jobspec = file("${path.module}/jobs/pi-hole.nomad")
+
+  hcl2 {
+    enabled  = true
+    allow_fs = true
+    vars = {
+      "domain"      = var.domain,
+      "subnet_cidr" = var.subnet_cidr,
+    }
+  }
 }
 
 resource "nomad_external_volume" "prometheus" {
@@ -304,6 +384,14 @@ resource "nomad_external_volume" "prometheus" {
 resource "nomad_job" "prometheus" {
   jobspec    = file("${path.module}/jobs/prometheus.nomad")
   depends_on = [nomad_external_volume.prometheus]
+
+  hcl2 {
+    enabled  = true
+    allow_fs = true
+    vars = {
+      "domain" = var.domain,
+    }
+  }
 }
 
 resource "nomad_job" "prometheus-esxi-exporter" {
@@ -312,6 +400,14 @@ resource "nomad_job" "prometheus-esxi-exporter" {
 
 resource "nomad_job" "speedtest" {
   jobspec = file("${path.module}/jobs/speedtest.nomad")
+
+  hcl2 {
+    enabled  = true
+    allow_fs = true
+    vars = {
+      "domain" = var.domain,
+    }
+  }
 }
 
 resource "nomad_external_volume" "splunk_etc" {
@@ -355,6 +451,14 @@ resource "nomad_external_volume" "splunk_var" {
 resource "nomad_job" "splunk" {
   jobspec    = file("${path.module}/jobs/splunk.nomad")
   depends_on = [nomad_external_volume.splunk_etc, nomad_external_volume.splunk_var]
+
+  hcl2 {
+    enabled  = true
+    allow_fs = true
+    vars = {
+      "domain" = var.domain,
+    }
+  }
 }
 
 resource "nomad_job" "storage-controller" {
@@ -401,8 +505,19 @@ resource "nomad_external_volume" "traefik" {
 }
 
 resource "nomad_job" "traefik" {
-  jobspec    = templatefile("${path.module}/jobs/traefik.nomad", { pilot_token = var.pilot_token })
+  jobspec    = file("${path.module}/jobs/traefik.nomad")
   depends_on = [nomad_external_volume.traefik]
+
+  hcl2 {
+    enabled  = true
+    allow_fs = true
+    vars = {
+      "domain"         = var.domain,
+      "email"          = var.email,
+      "google_project" = var.google_project,
+      "subnet_cidr"    = var.subnet_cidr,
+    }
+  }
 }
 
 resource "nomad_external_volume" "unifi" {
@@ -427,4 +542,79 @@ resource "nomad_external_volume" "unifi" {
 resource "nomad_job" "unifi" {
   jobspec    = file("${path.module}/jobs/unifi.nomad")
   depends_on = [nomad_external_volume.unifi]
+
+  hcl2 {
+    enabled  = true
+    allow_fs = true
+    vars = {
+      "domain"          = var.domain,
+      "vault_cert_role" = var.vault_cert_role,
+    }
+  }
+}
+
+resource "nomad_external_volume" "code_server" {
+  depends_on   = [data.nomad_plugin.nas]
+  type         = "csi"
+  plugin_id    = "nas"
+  volume_id    = "code_server"
+  name         = "code_server"
+  capacity_min = "1G"
+  capacity_max = "5G"
+
+  capability {
+    access_mode     = "single-node-writer"
+    attachment_mode = "file-system"
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "nomad_job" "code_server" {
+  jobspec    = file("${path.module}/jobs/code-server.nomad")
+  depends_on = [nomad_external_volume.code_server, nomad_job.docker_registry]
+
+  hcl2 {
+    enabled  = true
+    allow_fs = true
+    vars = {
+      "dns_servers"     = var.dns_servers,
+      "domain"          = var.domain,
+      "vault_cert_role" = var.vault_cert_role,
+    }
+  }
+}
+
+resource "nomad_external_volume" "docker_registry" {
+  depends_on   = [data.nomad_plugin.nas]
+  type         = "csi"
+  plugin_id    = "nas"
+  volume_id    = "docker_registry"
+  name         = "docker_registry"
+  capacity_min = "10M"
+  capacity_max = "5G"
+
+  capability {
+    access_mode     = "multi-node-multi-writer"
+    attachment_mode = "file-system"
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "nomad_job" "docker_registry" {
+  jobspec    = file("${path.module}/jobs/docker-registry.nomad")
+  depends_on = [nomad_external_volume.docker_registry]
+
+  hcl2 {
+    enabled  = true
+    allow_fs = true
+    vars = {
+      "vault_cert_role" = var.vault_cert_role,
+    }
+  }
 }

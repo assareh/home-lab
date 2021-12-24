@@ -57,40 +57,8 @@ EOS
       }
 
       resources {
-        cpu    = 57
+        cpu    = 20
         memory = 50
-      }
-
-      scaling "cpu" {
-        enabled = true
-        max     = 500
-
-        policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
-
-          check "95pct" {
-            strategy "app-sizing-percentile" {
-              percentile = "95"
-            }
-          }
-        }
-      }
-
-      scaling "mem" {
-        enabled = true
-        max     = 256
-
-        policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
-
-          check "95pct" {
-            strategy "app-sizing-percentile" {
-              percentile = "99"
-            }
-          }
-        }
       }
     }
   }

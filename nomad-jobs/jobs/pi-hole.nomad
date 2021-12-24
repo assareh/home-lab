@@ -1,3 +1,13 @@
+variable "domain" {
+  type    = string
+  default = "hashidemos.io"
+}
+
+variable "subnet_cidr" {
+  type    = string
+  default = "192.168.0"
+}
+
 job "pihole" {
   datacenters = ["dc1"]
 
@@ -15,7 +25,9 @@ job "pihole" {
   }
 
   group "pihole" {
+    count          = 2
     shutdown_delay = "5s"
+
     network {
       port "cloudflared" {}
 
@@ -41,7 +53,7 @@ job "pihole" {
       driver = "docker"
 
       config {
-        image        = "pihole/pihole:2021.09"
+        image        = "pihole/pihole:2021.10.1"
         network_mode = "host"
         volumes = [
           "local/etc-dnsmasq.d/00-custom.conf:/etc/dnsmasq.d/00-custom.conf",
@@ -55,22 +67,22 @@ job "pihole" {
         PIHOLE_DNS_   = "${attr.unique.network.ip-address}#${NOMAD_PORT_cloudflared}"
         QUERY_LOGGING = "true"
         TZ            = "America/Los_Angeles"
-        VIRTUAL_HOST  = "pihole.hashidemos.io"
+        VIRTUAL_HOST  = "pihole.${var.domain}"
         WEB_PORT      = "${NOMAD_PORT_http}"
       }
 
       template {
         destination = "secrets/pihole.env"
         env         = true
-
-        data = <<EOF
+        change_mode = "noop"
+        data        = <<EOF
 WEBPASSWORD="{{with secret "nomad/data/pihole"}}{{.Data.data.WEBPASSWORD}}{{end}}"
 EOF
       }
 
       resources {
-        cpu    = 1494
-        memory = 125
+        cpu    = 650
+        memory = 69
       }
 
       template {
@@ -81,17 +93,17 @@ EOF
 {{range service "consul"}}server=/consul/{{.Address}}#8600
 {{end}}
 # Local records
-cname=traefik.hashidemos.io,traefik.service.consul
-cname=pihole.hashidemos.io,traefik.service.consul
-{{range $tag, $services := services | byTag}}{{ if eq $tag "dnsmasq.cname=true" }}{{range $services}}cname={{.Name}}.hashidemos.io,traefik.service.consul
+address=/traefik.${var.domain}/{{range service "traefik-websecure"}}{{.Address}}{{end}}
+address=/pihole.${var.domain}/{{range service "traefik-websecure"}}{{.Address}}{{end}}
+{{range $tag, $services := services | byTag}}{{ if eq $tag "dnsmasq.cname=true" }}{{range $services}}address=/{{.Name}}.${var.domain}/{{range service "traefik-websecure"}}{{.Address}}{{end}}
 {{end}}{{end}}{{end}}
 EOF
       }
 
       template {
         destination = "local/pihole/pihole-FTL.conf"
-
-        data = <<EOF
+        change_mode = "noop"
+        data        = <<EOF
 PRIVACYLEVEL=0
 EOF
       }
@@ -99,8 +111,8 @@ EOF
       template {
         destination = "local/consul-udp-check"
         perms       = "755"
-
-        data = <<EOF
+        change_mode = "noop"
+        data        = <<EOF
 #!/bin/bash
 
 set -uo pipefail
@@ -123,7 +135,7 @@ EOF
         tags = [
           "traefik.enable=true",
           "traefik.http.routers.pihole.entryPoints=websecure",
-          "traefik.http.routers.pihole.rule=Host(`pihole.hashidemos.io`)",
+          "traefik.http.routers.pihole.rule=Host(`pihole.${var.domain}`)",
           "traefik.http.routers.pihole.tls=true",
         ]
 
@@ -147,7 +159,7 @@ EOF
         name = "dns"
         port = "dns"
 
-        // check {
+        // check { # this broke recently
         //   name     = "service: dns udp check"
         //   type     = "script"
         //   command  = "/local/consul-udp-check"
@@ -186,8 +198,8 @@ EOF
         max     = 2000
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -202,8 +214,8 @@ EOF
         max     = 1024
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "max" {
             strategy "app-sizing-max" {}
@@ -215,12 +227,17 @@ EOF
     task "keepalived" {
       driver = "docker"
 
+      lifecycle {
+        hook    = "poststart"
+        sidecar = true
+      }
+
       env {
         KEEPALIVED_INTERFACE     = "ens160"
         KEEPALIVED_ROUTER_ID     = "53"
         KEEPALIVED_STATE         = "MASTER"
         KEEPALIVED_UNICAST_PEERS = ""
-        KEEPALIVED_VIRTUAL_IPS   = "192.168.0.253"
+        KEEPALIVED_VIRTUAL_IPS   = "${var.subnet_cidr}.253"
       }
 
       config {
@@ -234,47 +251,21 @@ EOF
       }
 
       resources {
-        cpu    = 57
-        memory = 20
-      }
-
-      scaling "cpu" {
-        enabled = true
-        max     = 500
-
-        policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
-
-          check "95pct" {
-            strategy "app-sizing-percentile" {
-              percentile = "95"
-            }
-          }
-        }
-      }
-
-      scaling "mem" {
-        enabled = true
-        min     = 20 # less than this will fail to start
-        max     = 512
-
-        policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
-
-          check "max" {
-            strategy "app-sizing-max" {}
-          }
-        }
+        cpu    = 20
+        memory = 10
       }
     }
 
     task "cloudflared" {
       driver = "exec"
 
+      lifecycle {
+        hook    = "prestart"
+        sidecar = true
+      }
+
       config {
-        command = "/tmp/cloudflared/cloudflared"
+        command = "/tmp/cloudflared/cloudflared-linux-amd64"
 
         args = [
           "proxy-dns",
@@ -285,20 +276,24 @@ EOF
           "--metrics",
           "0.0.0.0:${NOMAD_PORT_prometheus_cloudflared_metrics}",
           "--upstream",
-          "https://1.1.1.1/dns-query",
+          "https://1.1.1.2/dns-query",
           "--upstream",
-          "https://1.0.0.1/dns-query",
+          "https://1.0.0.2/dns-query",
         ]
       }
 
       artifact {
-        source      = "https://bin.equinox.io/c/VdrWdbjqyF/cloudflared-stable-linux-amd64.tgz"
+        source      = "https://github.com/cloudflare/cloudflared/releases/download/2021.9.2/cloudflared-linux-amd64"
         destination = "/tmp/cloudflared"
+
+        options {
+          checksum = "sha256:73c88c9b9ae3211f9e90dba3ee42240e10875a2080a78a1cb9b3662493d4471d"
+        }
       }
 
       resources {
-        cpu    = 57
-        memory = 23
+        cpu    = 20
+        memory = 26
       }
 
       service {
@@ -345,8 +340,8 @@ EOF
         max     = 500
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -361,8 +356,8 @@ EOF
         max     = 512
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "max" {
             strategy "app-sizing-max" {}
@@ -373,6 +368,18 @@ EOF
 
     task "prometheus-pihole-exporter" {
       driver = "docker"
+
+      restart {
+        attempts = 30
+        interval = "5m"
+        delay    = "15s"
+        mode     = "fail"
+      }
+
+      lifecycle {
+        hook    = "poststart"
+        sidecar = true
+      }
 
       config {
         image = "ekofr/pihole-exporter:v0.0.11"
@@ -387,8 +394,8 @@ EOF
       }
 
       resources {
-        cpu    = 57
-        memory = 11
+        cpu    = 20
+        memory = 20 # repeat oom killed at 11
       }
 
       scaling "cpu" {
@@ -396,8 +403,8 @@ EOF
         max     = 500
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -412,8 +419,8 @@ EOF
         max     = 512
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "max" {
             strategy "app-sizing-max" {}
@@ -424,8 +431,8 @@ EOF
       template {
         destination = "secrets/pihole.env"
         env         = true
-
-        data = <<EOF
+        change_mode = "noop"
+        data        = <<EOF
   PIHOLE_API_TOKEN="{{with secret "nomad/data/pihole"}}{{.Data.data.WEBPASSWORD}}{{end}}"
   EOF
       }

@@ -1,3 +1,8 @@
+variable "domain" {
+  type    = string
+  default = "hashidemos.io"
+}
+
 job "speedtest" {
   datacenters = ["dc1"]
 
@@ -5,6 +10,8 @@ job "speedtest" {
 
   group "speedtest" {
     network {
+      mode = "bridge"
+
       port "http" {
         static = 8001
         to     = 80
@@ -18,10 +25,15 @@ job "speedtest" {
       tags = [
         "dnsmasq.cname=true",
         "traefik.enable=true",
+        #        "traefik.consulcatalog.connect=true",
         "traefik.http.routers.speedtest.entryPoints=websecure",
-        "traefik.http.routers.speedtest.rule=Host(`speedtest.hashidemos.io`)",
+        "traefik.http.routers.speedtest.rule=Host(`speedtest.${var.domain}`)",
         "traefik.http.routers.speedtest.tls=true",
       ]
+
+      // connect {
+      //   sidecar_service {}
+      // }
 
       check {
         type     = "http"
@@ -49,38 +61,8 @@ job "speedtest" {
       }
 
       resources {
-        cpu    = 57
+        cpu    = 20
         memory = 14
-      }
-
-      scaling "cpu" {
-        enabled = true
-        max     = 500
-
-        policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
-
-          check "95pct" {
-            strategy "app-sizing-percentile" {
-              percentile = "95"
-            }
-          }
-        }
-      }
-
-      scaling "mem" {
-        enabled = true
-        max     = 512
-
-        policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
-
-          check "max" {
-            strategy "app-sizing-max" {}
-          }
-        }
       }
     }
   }

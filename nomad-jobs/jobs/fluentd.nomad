@@ -22,7 +22,7 @@ job "fluentd" {
       driver = "docker"
 
       config {
-        image = "assareh/fluentd-splunk-hec:v1.14-debian-1" # custom image with fluent-plugin-splunk-enterprise
+        image = "docker-registry.service.consul:5000/fluentd-splunk-hec:v1.14-debian-1" # custom image with fluent-plugin-splunk-enterprise
         ports = ["fluentd"]
 
         mount {
@@ -78,8 +78,8 @@ EOF
       }
 
       resources {
-        cpu    = 172
-        memory = 256
+        cpu    = 20
+        memory = 114
       }
 
       scaling "cpu" {
@@ -87,8 +87,8 @@ EOF
         max     = 500
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -103,8 +103,8 @@ EOF
         max     = 512
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "max" {
             strategy "app-sizing-max" {}

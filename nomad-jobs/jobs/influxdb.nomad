@@ -34,8 +34,8 @@ job "influxdb" {
       }
 
       resources {
-        cpu    = 804
-        memory = 1353
+        cpu    = 300
+        memory = 1612
       }
 
       service {
@@ -64,8 +64,8 @@ job "influxdb" {
         max     = 1500
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -80,8 +80,8 @@ job "influxdb" {
         max     = 2048
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "max" {
             strategy "app-sizing-max" {}

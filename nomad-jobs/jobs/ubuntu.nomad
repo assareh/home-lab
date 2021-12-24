@@ -23,7 +23,7 @@ job "ubuntu" {
       }
 
       artifact {
-        source      = "http://192.168.0.20:8080/userdata.img"
+        source      = "http://localhost:8080/userdata.img"
         destination = "local/"
       }
 
@@ -43,7 +43,7 @@ job "ubuntu" {
       }
 
       resources {
-        cpu    = 2000
+        cpu    = 600
         memory = 2048
       }
 

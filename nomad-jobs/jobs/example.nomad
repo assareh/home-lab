@@ -3,7 +3,6 @@ job "example" {
   type        = "service"
 
   group "example" {
-
     volume "example" {
       type            = "csi"
       source          = "example"
@@ -31,10 +30,9 @@ job "example" {
       }
 
       resources {
-        cpu    = 500
+        cpu    = 150
         memory = 256
       }
-
     }
   }
 }

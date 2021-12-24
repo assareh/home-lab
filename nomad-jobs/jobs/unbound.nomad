@@ -17,7 +17,7 @@ job "unbound" {
       }
 
       resources {
-        cpu    = 100
+        cpu    = 35
         memory = 128
       }
     }

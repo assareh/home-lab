@@ -1,3 +1,8 @@
+variable "domain" {
+  type    = string
+  default = "hashidemos.io"
+}
+
 job "countdash" {
   datacenters = ["dc1"]
 
@@ -33,38 +38,8 @@ job "countdash" {
       }
 
       resources {
-        cpu    = 57
+        cpu    = 20
         memory = 10
-      }
-
-      scaling "cpu" {
-        enabled = true
-        max     = 500
-
-        policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
-
-          check "95pct" {
-            strategy "app-sizing-percentile" {
-              percentile = "95"
-            }
-          }
-        }
-      }
-
-      scaling "mem" {
-        enabled = true
-        max     = 512
-
-        policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
-
-          check "max" {
-            strategy "app-sizing-max" {}
-          }
-        }
       }
     }
   }
@@ -84,7 +59,7 @@ job "countdash" {
         "dnsmasq.cname=true",
         "traefik.enable=true",
         "traefik.http.routers.countdash.entryPoints=websecure",
-        "traefik.http.routers.countdash.rule=Host(`countdash.hashidemos.io`)",
+        "traefik.http.routers.countdash.rule=Host(`countdash.${var.domain}`)",
         "traefik.http.routers.countdash.tls=true",
       ]
 
@@ -118,38 +93,8 @@ job "countdash" {
       }
 
       resources {
-        cpu    = 57
+        cpu    = 20
         memory = 10
-      }
-
-      scaling "cpu" {
-        enabled = true
-        max     = 500
-
-        policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
-
-          check "95pct" {
-            strategy "app-sizing-percentile" {
-              percentile = "95"
-            }
-          }
-        }
-      }
-
-      scaling "mem" {
-        enabled = true
-        max     = 512
-
-        policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
-
-          check "max" {
-            strategy "app-sizing-max" {}
-          }
-        }
       }
     }
   }

@@ -47,38 +47,8 @@ job "prometheus-esxi-exporter" {
       }
 
       resources {
-        cpu    = 57
-        memory = 13
-      }
-
-      scaling "cpu" {
-        enabled = true
-        max     = 500
-
-        policy {
-          cooldown            = "24h"
-          evaluation_interval = "1h"
-
-          check "95pct" {
-            strategy "app-sizing-percentile" {
-              percentile = "95"
-            }
-          }
-        }
-      }
-
-      scaling "mem" {
-        enabled = true
-        max     = 512
-
-        policy {
-          cooldown            = "24h"
-          evaluation_interval = "1h"
-
-          check "max" {
-            strategy "app-sizing-max" {}
-          }
-        }
+        cpu    = 20
+        memory = 12
       }
 
       template {

@@ -178,7 +178,7 @@ EOF
       }
 
       resources {
-        cpu    = 229
+        cpu    = 75
         memory = 102
       }
 
@@ -187,8 +187,8 @@ EOF
         max     = 500
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "95pct" {
             strategy "app-sizing-percentile" {
@@ -203,8 +203,8 @@ EOF
         max     = 512
 
         policy {
-          cooldown            = "24h"
-          evaluation_interval = "24h"
+          cooldown            = "72h"
+          evaluation_interval = "72h"
 
           check "max" {
             strategy "app-sizing-max" {}
