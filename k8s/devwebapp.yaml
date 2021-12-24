@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: internal-app
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: devwebapp-with-annotations
+  labels:
+    app: devwebapp-with-annotations
+  annotations:
+    # AGENT INJECTOR SETTINGS
+    vault.hashicorp.com/agent-inject: "true"
+    # SECRET
+    vault.hashicorp.com/agent-inject-secret-credentials.txt: "secret/data/devwebapp/config"
+    # VAULT SETTINGS
+    vault.hashicorp.com/role: "devweb-app"
+    vault.hashicorp.com/tls-secret: "tls-test-client"
+    vault.hashicorp.com/ca-cert: "/vault/tls/ca.pem"
+spec:
+  serviceAccountName: internal-app
+  containers:
+    - name: app
+      image: burtlo/devwebapp-ruby:k8s

@@ -6,3 +6,4 @@ remote_backend.tf*
 *.pem
 .vagrant
 *.hclic
+dev

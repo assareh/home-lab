@@ -1,7 +1,10 @@
 global:
   name: consul
   datacenter: dc2
-  image: 'hashicorp/consul-enterprise:1.10.3-ent'
+  image: 'hashicorp/consul-enterprise:1.11.1-ent'
+  enterpriseLicense:
+    secretName: 'consul-license'
+    secretKey: 'key'
   tls:
     enabled: true
     caCert:
@@ -20,7 +23,7 @@ server:
     {
       "log_level": "DEBUG",
       "primary_datacenter": "dc1",
-      "primary_gateways": ["192.168.0.104:9100"]
+      "primary_gateways": ["mesh-gateway.service.consul:9100"]
     }
   replicas: 1
   securityContext:
@@ -28,16 +31,25 @@ server:
     runAsGroup: 0
     runAsUser: 0
     fsGroup: 0
-  enterpriseLicense:
-    secretName: 'consul-license'
-    secretKey: 'key'
 ui:
   enabled: true
 connectInject:
   enabled: true
+  envoyExtraArgs: "--component-log-level upstream:debug,http:debug,router:debug,config:debug"
 controller:
   enabled: true
+  replicas: 1
 meshGateway:
   enabled: true
-
-
+  replicas: 1
+ingressGateways:
+  enabled: true
+  replicas: 1
+  defaults:
+    service:
+      type: NodePort
+      ports:
+        - port: 30080
+          nodePort: 30080
+  gateways:
+    - name: dc2-ingress-gateway

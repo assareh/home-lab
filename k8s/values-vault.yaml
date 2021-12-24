@@ -1,0 +1,9 @@
+global:
+  enabled: true
+
+injector:
+  enabled: true
+  externalVaultAddr: "https://vault.service.consul:8200"
+
+server:
+  enabled: false
