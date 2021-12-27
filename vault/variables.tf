@@ -1,3 +1,8 @@
+variable "bound_cidrs" {
+  description = "List of IP CIDRs allowed for bootstrap role."
+  type        = list(string)
+}
+
 variable "kubernetes_ca_cert" {
   description = "The Kubernetes CA Certificate (KUBE_CA_CERT)"
   type        = string

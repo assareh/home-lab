@@ -42,10 +42,10 @@ resource "vault_token_auth_backend_role" "nomad-cluster" {
 # this is used by vault agent during VM creation to bootstrap node secrets
 resource "vault_approle_auth_backend_role" "bootstrap" {
   role_name             = "bootstrap"
-  secret_id_bound_cidrs = ["192.168.0.101/32", "192.168.0.102/31", "192.168.0.104/31", "192.168.0.106/32"]
+  secret_id_bound_cidrs = var.bound_cidrs
   secret_id_num_uses    = "1"
   secret_id_ttl         = "420"
-  token_bound_cidrs     = ["192.168.0.101/32", "192.168.0.102/31", "192.168.0.104/31", "192.168.0.106/32"]
+  token_bound_cidrs     = var.bound_cidrs
   token_period          = "259200"
   token_policies        = ["consul-client-tls", "consul-server-tls", "gcp-kms", "nomad-server", "pki"]
 }

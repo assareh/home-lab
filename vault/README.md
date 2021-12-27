@@ -1,3 +1,3 @@
 # Vault cluster configuration with Terraform
 
-WIP
+This terraform code documents the Vault configuration.
