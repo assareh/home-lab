@@ -37,22 +37,96 @@ resource "vault_token_auth_backend_role" "nomad-cluster" {
   ]
 }
 
-# add and import approle auth method
+# add and import all these policies mentioned here
+
+# this is for the bootstrap script
+resource "vault_auth_backend" "approle" {
+  type = "approle"
+}
 
 # this is used by vault agent during VM creation to bootstrap node secrets
 resource "vault_approle_auth_backend_role" "bootstrap" {
+  backend               = vault_auth_backend.approle.path
   role_name             = "bootstrap"
   secret_id_bound_cidrs = var.bound_cidrs
   secret_id_num_uses    = "1"
   secret_id_ttl         = "420"
   token_bound_cidrs     = var.bound_cidrs
   token_period          = "259200"
-  token_policies        = ["consul-client-tls", "consul-server-tls", "gcp-kms", "nomad-server", "pki"]
+  token_policies = [
+    "consul-client-tls",
+    "consul-server-tls",
+    "gcp-kms",
+    "nomad-server",
+    "pki"
+  ]
 }
 
-# add and import all these policies mentioned here
+# role id
+data "vault_approle_auth_backend_role_id" "role_id" {
+  backend   = vault_auth_backend.approle.path
+  role_name = vault_approle_auth_backend_role.bootstrap.role_name
+}
+
+output "role-id" {
+  value = data.vault_approle_auth_backend_role_id.role_id.role_id
+}
+
+# for okta
+resource "vault_jwt_auth_backend" "oidc" {
+  path               = "oidc"
+  type               = "oidc"
+  default_role       = "okta_admin"
+  oidc_discovery_url = var.okta_oidc_url
+  oidc_client_id     = var.okta_oidc_client_id
+  oidc_client_secret = var.okta_oidc_client_secret
+  bound_issuer       = var.okta_oidc_url
+}
+
+resource "vault_jwt_auth_backend_role" "okta_admin" {
+  backend        = vault_jwt_auth_backend.oidc.path
+  role_name      = "okta_admin"
+  role_type      = "oidc"
+  token_policies = ["admin"]
+  oidc_scopes    = ["openid", "profile", "email"]
+  user_claim     = "email"
+
+  allowed_redirect_uris = [
+    "http://localhost:8250/oidc/callback",
+    "https://vault.service.consul:8200/ui/vault/auth/oidc/oidc/callback"
+  ]
+
+  bound_audiences = [
+    var.okta_oidc_client_id,
+    "api://vault"
+  ]
+
+  bound_claims = {
+    groups = "vault_admins"
+  }
+}
 
 # for gitlab CI
+resource "vault_jwt_auth_backend" "jwt" {
+  path         = "jwt"
+  jwks_url     = "https://${var.gitlab_host}/-/jwks"
+  bound_issuer = var.gitlab_host
+}
+
+resource "vault_jwt_auth_backend_role" "packer" {
+  backend                = vault_jwt_auth_backend.jwt.path
+  role_name              = "packer"
+  role_type              = "jwt"
+  token_explicit_max_ttl = "60"
+  token_policies         = ["packer"]
+  user_claim             = "user_email"
+
+  bound_claims = {
+    project_id = "8"
+    ref        = "master"
+    ref_type   = "branch"
+  }
+}
 
 # this is for k3s vault sidecar injector and devwebapp example
 resource "vault_auth_backend" "kubernetes" {
@@ -72,8 +146,8 @@ resource "vault_kubernetes_auth_backend_role" "devweb-app" {
   role_name                        = "devweb-app"
   bound_service_account_names      = ["internal-app"]
   bound_service_account_namespaces = ["default"]
-  token_ttl                        = 86400
   token_policies                   = ["devwebapp"]
+  token_ttl                        = 86400
 }
 
 resource "vault_policy" "devwebapp" {
@@ -87,8 +161,8 @@ EOT
 }
 
 resource "vault_mount" "kvv2-secret" {
-  path        = "secret"
-  type        = "kv-v2"
+  path = "secret"
+  type = "kv-v2"
 }
 
 resource "vault_generic_secret" "devwebapp" {
