@@ -34,8 +34,8 @@ job "influxdb" {
       }
 
       resources {
-        cpu    = 300
-        memory = 1612
+        cpu    = 1000
+        memory = 4096
       }
 
       service {
@@ -77,7 +77,7 @@ job "influxdb" {
 
       scaling "mem" {
         enabled = true
-        max     = 2048
+        max     = 4096
 
         policy {
           cooldown            = "72h"

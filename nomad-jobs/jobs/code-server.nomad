@@ -125,8 +125,8 @@ job "code-server" {
       }
 
       resources {
-        cpu    = 500
-        memory = 1024
+        cpu    = 57
+        memory = 256 # OOM killed at 102
       }
 
       scaling "cpu" {

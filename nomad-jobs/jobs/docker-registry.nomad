@@ -69,8 +69,8 @@ job "docker-registry" {
       }
 
       resources {
-        cpu    = 150
-        memory = 256
+        cpu    = 57
+        memory = 293
       }
 
       volume_mount {

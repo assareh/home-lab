@@ -16,8 +16,8 @@ source "vmware-iso" "ubuntu-20-castle" {
   disk_type_id           = "thin"
   guest_os_type          = "ubuntu-64"
   headless               = "false"
-  iso_checksum           = "sha256:f8e3086f3cea0fb3fefb29937ab5ed9d19e767079633960ccb50e76153effc98"
-  iso_url                = "https://releases.ubuntu.com/20.04/ubuntu-20.04.3-live-server-amd64.iso"
+  iso_checksum           = var.iso_checksum
+  iso_url                = var.iso_url
   keep_registered        = true
   memory                 = "${var.vm_mem_size}"
   network_adapter_type   = "vmxnet3"
@@ -38,7 +38,7 @@ source "vmware-iso" "ubuntu-20-castle" {
   vmx_data = {
     "virtualhw.version" = "17"
   }
-  # vmx_data_post may not still be required, but added to ensure 
+  # vmx_data_post may not still be required, but added to ensure
   # cd drives are removed and not booted from after provisioning
   vmx_data_post = {
     "bios.bootorder"        = "hdd"
@@ -77,73 +77,57 @@ build {
     source      = "files/"
   }
 
+  # install Consul
   provisioner "shell" {
     inline = [
-      "sudo mv /home/${var.ssh_username}/root.crt /usr/local/share/ca-certificates/",
-      "sudo update-ca-certificates"
-    ]
-  }
-
-  provisioner "shell" {
-    inline = [
-      "curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -",
-      "sudo apt-add-repository \"deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main\"",
-      "sudo apt-get update",
-      "sudo apt-get upgrade -y",
-      "sudo apt-get install -y nomad-enterprise=${var.nomad_version} vault-enterprise=${var.vault_version} consul-enterprise=${var.consul_version}",
-      "sudo apt-get autoremove -y",
-      "sudo -H -u ${var.ssh_username} nomad -autocomplete-install",
+      "curl --silent -O https://releases.hashicorp.com/consul/${var.consul_version}/consul_${var.consul_version}_linux_amd64.zip",
+      "curl --silent -O https://releases.hashicorp.com/consul/${var.consul_version}/consul_${var.consul_version}_SHA256SUMS",
+      "shasum -c --ignore-missing consul_${var.consul_version}_SHA256SUMS",
+      "unzip -o consul_${var.consul_version}_linux_amd64.zip",
+      "sudo chown root:root consul",
+      "sudo mv consul /usr/bin/",
+      "consul --version",
       "sudo -H -u ${var.ssh_username} consul -autocomplete-install",
-      "sudo -H -u ${var.ssh_username} vault -autocomplete-install"
+      "sudo useradd --system --home /etc/consul.d --shell /bin/false consul",
+      "sudo mkdir -p -m 755 /opt/consul /etc/consul.d",
+      "sudo chown -R consul:consul /opt/consul /etc/consul.d",
+      "sudo mv /home/${var.ssh_username}/consul.service /usr/lib/systemd/system/consul.service",
     ]
   }
 
+  # install Nomad
   provisioner "shell" {
     inline = [
-      "sudo mkdir -p /opt/cni/bin/",
-      "curl -LO https://github.com/containernetworking/plugins/releases/download/v${var.cni_version}/cni-plugins-linux-amd64-v${var.cni_version}.tgz",
-      "sudo tar -xzf cni-plugins-linux-amd64-v${var.cni_version}.tgz -C /opt/cni/bin/"
+      "curl --silent -O https://releases.hashicorp.com/nomad/${var.nomad_version}/nomad_${var.nomad_version}_linux_amd64.zip",
+      "curl --silent -O https://releases.hashicorp.com/nomad/${var.nomad_version}/nomad_${var.nomad_version}_SHA256SUMS",
+      "shasum -c --ignore-missing nomad_${var.nomad_version}_SHA256SUMS",
+      "unzip -o nomad_${var.nomad_version}_linux_amd64.zip",
+      "sudo chown root:root nomad",
+      "sudo mv nomad /usr/bin/",
+      "nomad --version",
+      "sudo -H -u ${var.ssh_username} nomad -autocomplete-install",
+      "sudo useradd --system --home /etc/nomad.d --shell /bin/false nomad",
+      "sudo mkdir -p -m 755 /opt/nomad /etc/nomad.d",
+      "sudo chown -R nomad:nomad /opt/nomad /etc/nomad.d",
+      "sudo mv /home/${var.ssh_username}/nomad.service /usr/lib/systemd/system/nomad.service",
     ]
   }
 
+  # install Vault
   provisioner "shell" {
     inline = [
-      "sudo apt install -y apt-transport-https gnupg2",
-      "curl -sL 'https://deb.dl.getenvoy.io/public/gpg.8115BA8E629CC074.key' | sudo gpg --dearmor -o /usr/share/keyrings/getenvoy-keyring.gpg",
-      "sudo apt-add-repository \"deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main\"",
-      "echo \"deb [arch=amd64 signed-by=/usr/share/keyrings/getenvoy-keyring.gpg] https://deb.dl.getenvoy.io/public/deb/ubuntu $(lsb_release -cs) main\" | sudo tee /etc/apt/sources.list.d/getenvoy.list",
-      "sudo apt update",
-      "sudo apt install -y getenvoy-envoy"
-    ]
-  }
-
-  provisioner "shell" {
-    inline = [
-      "sudo mkdir -p /opt/nomad/plugins",
-      "curl -OL https://github.com/Roblox/nomad-driver-containerd/releases/download/v${var.containerd_version}/containerd-driver",
-      "sudo mv containerd-driver /opt/nomad/plugins/."
-    ]
-  }
-
-provisioner "shell" {
-    inline = [
-      "echo \"deb http://packages.azlux.fr/debian/ buster main\" | sudo tee /etc/apt/sources.list.d/azlux.list",
-      "wget -qO - https://azlux.fr/repo.gpg.key | sudo apt-key add -",
-      "sudo apt-get update && sudo apt-get install docker-ctop"
-    ]
-  }
-
-  provisioner "shell" {
-    inline = [
-      "chmod +x /home/${var.ssh_username}/VMware-ovftool-4.4.1-16812187-lin.x86_64.bundle",
-      "sudo /home/${var.ssh_username}/VMware-ovftool-4.4.1-16812187-lin.x86_64.bundle --eulas-agreed --required --console"
-    ]
-  }
-
-  provisioner "shell" {
-    inline = [
+      "curl --silent -O https://releases.hashicorp.com/vault/${var.vault_version}/vault_${var.vault_version}_linux_amd64.zip",
+      "curl --silent -O https://releases.hashicorp.com/vault/${var.vault_version}/vault_${var.vault_version}_SHA256SUMS",
+      "shasum -c --ignore-missing vault_${var.vault_version}_SHA256SUMS",
+      "unzip -o vault_${var.vault_version}_linux_amd64.zip",
+      "sudo chown root:root vault",
+      "sudo mv vault /usr/bin/",
+      "vault --version",
+      "sudo -H -u ${var.ssh_username} vault -autocomplete-install",
+      "sudo useradd --system --home /etc/vault.d --shell /bin/false vault",
+      "sudo mkdir -p -m 755 /opt/vault/tls /etc/vault.d",
+      "sudo chown -R vault:vault /opt/vault /etc/vault.d",
       "sudo mv /home/${var.ssh_username}/vault.service /usr/lib/systemd/system/vault.service",
-      "sudo systemctl daemon-reload",
       "sudo touch /var/log/vault_audit.log",
       "sudo chown vault:vault /var/log/vault_audit.log",
       "sudo touch /var/log/vault_audit.pos",
@@ -153,8 +137,15 @@ provisioner "shell" {
 
   provisioner "shell" {
     inline = [
-      "sudo chown -R nomad:nomad /opt/nomad",
-      "sudo chmod -R 700 /opt/nomad"
+      "sudo mkdir -p /opt/nomad/plugins",
+      "curl --silent -OL https://github.com/Roblox/nomad-driver-containerd/releases/download/v${var.containerd_version}/containerd-driver",
+      "sudo mv containerd-driver /opt/nomad/plugins/."
+    ]
+  }
+
+  provisioner "shell" {
+    inline = [
+      "sudo systemctl daemon-reload",
     ]
   }
 
@@ -207,6 +198,53 @@ provisioner "shell" {
       "echo \"export CONSUL_CACERT=/etc/consul.d/consul-agent-ca.pem\" | sudo tee -a /home/${var.ssh_username}/.bashrc",
       "echo \"export CONSUL_CLIENT_KEY=/etc/consul.d/dc1-server-consul-key.pem\" | sudo tee -a /home/${var.ssh_username}/.bashrc",
       "echo \"export CONSUL_CLIENT_CERT=/etc/consul.d/dc1-server-consul.pem\" | sudo tee -a /home/${var.ssh_username}/.bashrc"
+    ]
+  }
+
+  provisioner "shell" {
+    inline = [
+      "sudo mv /home/${var.ssh_username}/root.crt /usr/local/share/ca-certificates/",
+      "sudo update-ca-certificates"
+    ]
+  }
+
+  provisioner "shell" {
+    inline = [
+      "sudo apt-get update",
+      "sudo apt-get upgrade -y",
+      "sudo apt-get autoremove -y"
+    ]
+  }
+
+  provisioner "shell" {
+    inline = [
+      "chmod +x /home/${var.ssh_username}/VMware-ovftool-4.4.1-16812187-lin.x86_64.bundle",
+      "sudo /home/${var.ssh_username}/VMware-ovftool-4.4.1-16812187-lin.x86_64.bundle --eulas-agreed --required --console"
+    ]
+  }
+
+  provisioner "shell" {
+    inline = [
+      "sudo mkdir -p /opt/cni/bin/",
+      "curl --silent -LO https://github.com/containernetworking/plugins/releases/download/v${var.cni_version}/cni-plugins-linux-amd64-v${var.cni_version}.tgz",
+      "sudo tar -xzf cni-plugins-linux-amd64-v${var.cni_version}.tgz -C /opt/cni/bin/"
+    ]
+  }
+
+  provisioner "shell" {
+    inline = [
+      "sudo apt-get install -y apt-transport-https gnupg2",
+      "curl --silent -sL 'https://deb.dl.getenvoy.io/public/gpg.8115BA8E629CC074.key' | sudo gpg --dearmor -o /usr/share/keyrings/getenvoy-keyring.gpg",
+      "echo \"deb [arch=amd64 signed-by=/usr/share/keyrings/getenvoy-keyring.gpg] https://deb.dl.getenvoy.io/public/deb/ubuntu $(lsb_release -cs) main\" | sudo tee /etc/apt/sources.list.d/getenvoy.list",
+      "sudo apt-get update",
+      "sudo apt-get install -y getenvoy-envoy"
+    ]
+  }
+
+  provisioner "shell" {
+    inline = [
+      "sudo wget https://github.com/bcicen/ctop/releases/download/0.7.6/ctop-0.7.6-linux-amd64 -O /usr/local/bin/ctop",
+      "sudo chmod +x /usr/local/bin/ctop"
     ]
   }
 }

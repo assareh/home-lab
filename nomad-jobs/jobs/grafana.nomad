@@ -52,8 +52,8 @@ job "grafana" {
       }
 
       resources {
-        cpu    = 20
-        memory = 37
+        cpu    = 57
+        memory = 26
       }
 
       service {

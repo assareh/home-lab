@@ -1,12 +1,12 @@
 # Read the documentation for locals blocks here:
 # https://www.packer.io/docs/templates/hcl_templates/blocks/locals
 locals {
-  consul_gossip   = vault("/packer/data/consul", "gossip")
-  esxi_password   = vault("/packer/data/esxi", "esxi_password")
-  esxi_username   = vault("/packer/data/esxi", "esxi_username")
-  ssh_password    = vault("/packer/data/ubuntu", "nas")
-  timestamp       = regex_replace(timestamp(), "[- TZ:]", "")
-  vm_name         = "NAS-${local.timestamp}"
+  consul_gossip = vault("/packer/data/consul", "gossip")
+  esxi_password = vault("/packer/data/esxi", "esxi_password")
+  esxi_username = vault("/packer/data/esxi", "esxi_username")
+  ssh_password  = vault("/packer/data/ubuntu", "nas")
+  timestamp     = regex_replace(timestamp(), "[- TZ:]", "")
+  vm_name       = "NAS-${local.timestamp}"
 }
 
 # All generated input variables will be of 'string' type as this is how Packer JSON
@@ -18,12 +18,22 @@ locals {
 # https://www.packer.io/docs/templates/hcl_templates/blocks/variable
 variable "consul_version" {
   type    = string
-  default = "1.10.2"
+  default = "1.12.0"
 }
 
 variable "esxi_host" {
   type    = string
   default = "esxi.local"
+}
+
+variable "iso_checksum" {
+  type    = string
+  default = "sha256:28ccdb56450e643bad03bb7bcf7507ce3d8d90e8bf09e38f6bd9ac298a98eaad"
+}
+
+variable "iso_url" {
+  type    = string
+  default = "https://releases.ubuntu.com/20.04/ubuntu-20.04.4-live-server-amd64.iso"
 }
 
 variable "network_name" {

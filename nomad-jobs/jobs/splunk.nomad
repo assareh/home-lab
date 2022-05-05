@@ -128,8 +128,8 @@ EOF
       }
 
       resources {
-        cpu    = 250
-        memory = 1024
+        cpu    = 459
+        memory = 795
       }
 
       scaling "cpu" {

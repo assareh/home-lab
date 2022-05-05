@@ -57,8 +57,8 @@ job "gitlab-runner" {
       }
 
       resources {
-        cpu    = 35 # this is not the runner, this is the helper - which spawns other containers to do worker
-        memory = 256
+        cpu    = 57 # this is not the runner, this is the helper - which spawns other containers to do worker
+        memory = 14
       }
 
 
@@ -124,13 +124,13 @@ check_interval = 0
     [runners.cache.gcs]
     [runners.cache.azure]
   [runners.docker]
-    tls_verify = false
+    tls_verify = true
     image = "alpine:latest"
     privileged = false
     disable_entrypoint_overwrite = false
     oom_kill_disable = false
     disable_cache = false
-    volumes = ["/cache", "/opt/nomad/alloc/{{ env "NOMAD_ALLOC_ID" }}/alloc/ca.crt:/etc/gitlab-runner/certs/ca.crt:ro"]
+    volumes = ["/certs/client", "/var/run/docker.sock:/var/run/docker.sock", "/cache", "/opt/nomad/alloc/{{ env "NOMAD_ALLOC_ID" }}/alloc/ca.crt:/etc/gitlab-runner/certs/ca.crt:ro"]
     shm_size = 0
 EOF
       }

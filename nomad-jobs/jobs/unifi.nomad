@@ -55,7 +55,7 @@ job "unifi" {
       }
 
       config {
-        image = "jacobalberty/unifi:v6.5.54"
+        image = "jacobalberty/unifi:v7.1.61"
         ports = ["cmdctrl", "https", "stun"]
         volumes = [
           "secrets/certs:/unifi/cert",
@@ -127,7 +127,7 @@ job "unifi" {
         perms       = "640"
         data        = <<EOF
 {{ $ip_sans := printf "ip_sans=%s" (env "NOMAD_IP_https") }}
-{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=unifi.service.consul" "alt_names=unifi.${var.domain}" $ip_sans }}
+{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=unifi.service.consul" $ip_sans }}
 {{ .Data.certificate }}{{ end }}
           EOF
       }
@@ -137,7 +137,7 @@ job "unifi" {
         perms       = "400"
         data        = <<EOF
 {{ $ip_sans := printf "ip_sans=%s" (env "NOMAD_IP_https") }}
-{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=unifi.service.consul" "alt_names=unifi.${var.domain}" $ip_sans }}
+{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=unifi.service.consul" $ip_sans }}
 {{ .Data.private_key }}{{ end }}
           EOF
       }
@@ -147,14 +147,14 @@ job "unifi" {
         perms       = "640"
         data        = <<EOF
 {{ $ip_sans := printf "ip_sans=%s" (env "NOMAD_IP_https") }}
-{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=unifi.service.consul" "alt_names=unifi.${var.domain}" $ip_sans }}
+{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=unifi.service.consul" $ip_sans }}
 {{ .Data.issuing_ca }}{{ end }}
           EOF
       }
 
       resources {
-        cpu    = 60
-        memory = 1178
+        cpu    = 172
+        memory = 1124
       }
 
       scaling "cpu" {

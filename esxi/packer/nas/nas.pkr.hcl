@@ -16,8 +16,8 @@ source "vmware-iso" "ubuntu-20-nas" {
   disk_type_id           = "thin"
   guest_os_type          = "ubuntu-64"
   headless               = "false"
-  iso_checksum           = "sha256:f8e3086f3cea0fb3fefb29937ab5ed9d19e767079633960ccb50e76153effc98"
-  iso_url                = "https://releases.ubuntu.com/20.04/ubuntu-20.04.3-live-server-amd64.iso"
+  iso_checksum           = var.iso_checksum
+  iso_url                = var.iso_url
   keep_registered        = true
   memory                 = "${var.vm_mem_size}"
   network_adapter_type   = "vmxnet3"
@@ -75,15 +75,29 @@ build {
     source      = "files/"
   }
 
+  # install Consul
   provisioner "shell" {
     inline = [
-      "curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -",
-      "sudo apt-add-repository \"deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main\"",
+      "curl --silent -O https://releases.hashicorp.com/consul/${var.consul_version}/consul_${var.consul_version}_linux_amd64.zip",
+      "curl --silent -O https://releases.hashicorp.com/consul/${var.consul_version}/consul_${var.consul_version}_SHA256SUMS",
+      "shasum -c --ignore-missing consul_${var.consul_version}_SHA256SUMS",
+      "unzip -o consul_${var.consul_version}_linux_amd64.zip",
+      "sudo chown root:root consul",
+      "sudo mv consul /usr/bin/",
+      "consul --version",
+      "sudo -H -u ${var.ssh_username} consul -autocomplete-install",
+      "sudo useradd --system --home /etc/consul.d --shell /bin/false consul",
+      "sudo mkdir -p -m 755 /opt/consul /etc/consul.d",
+      "sudo chown -R consul:consul /opt/consul /etc/consul.d",
+      "sudo mv /home/${var.ssh_username}/consul.service /usr/lib/systemd/system/consul.service",
+    ]
+  }
+
+  provisioner "shell" {
+    inline = [
       "sudo apt-get update",
       "sudo apt-get upgrade -y",
-      "sudo apt-get install -y consul=${var.consul_version}",
-      "sudo apt-get autoremove -y",
-      "sudo -H -u ${var.ssh_username} consul -autocomplete-install"
+      "sudo apt-get autoremove -y"
     ]
   }
 

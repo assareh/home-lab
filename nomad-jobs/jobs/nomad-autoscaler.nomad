@@ -8,7 +8,7 @@ job "nomad-autoscaler" {
       driver = "docker"
 
       config {
-        image   = "hashicorp/nomad-autoscaler-enterprise:0.3.4"
+        image   = "hashicorp/nomad-autoscaler-enterprise:0.3.5"
         command = "bin/nomad-autoscaler"
 
         args = [
@@ -48,8 +48,8 @@ EOH
       }
 
       resources {
-        cpu    = 20
-        memory = 166
+        cpu    = 57
+        memory = 96
       }
 
       scaling "cpu" {

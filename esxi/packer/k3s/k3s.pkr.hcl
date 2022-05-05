@@ -16,8 +16,8 @@ source "vmware-iso" "ubuntu-20-k3s" {
   disk_type_id           = "thin"
   guest_os_type          = "ubuntu-64"
   headless               = "false"
-  iso_checksum           = "sha256:f8e3086f3cea0fb3fefb29937ab5ed9d19e767079633960ccb50e76153effc98"
-  iso_url                = "https://releases.ubuntu.com/20.04/ubuntu-20.04.3-live-server-amd64.iso"
+  iso_checksum           = var.iso_checksum
+  iso_url                = var.iso_url
   keep_registered        = true
   memory                 = "${var.vm_mem_size}"
   network_adapter_type   = "vmxnet3"

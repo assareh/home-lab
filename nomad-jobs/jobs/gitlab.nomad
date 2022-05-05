@@ -61,7 +61,7 @@ job "gitlab" {
       shutdown_delay = "5s"
 
       config {
-        image = "gitlab/gitlab-ee:14.5.2-ee.0"
+        image = "gitlab/gitlab-ee:14.5.4-ee.0"
         ports = ["https", "registry_https"]
         volumes = [
           "secrets/certs:/etc/gitlab/ssl",
@@ -197,9 +197,9 @@ job "gitlab" {
         perms       = "640"
         data        = <<EOF
 {{ $ip_sans := printf "ip_sans=%s" (env "NOMAD_IP_https") }}
-{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=gitlab.service.consul" "alt_names=gitlab.${var.domain}" $ip_sans }}
+{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=gitlab.service.consul" $ip_sans }}
 {{ .Data.certificate }}{{ end }}
-{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=gitlab.service.consul" "alt_names=gitlab.${var.domain}" $ip_sans }}
+{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=gitlab.service.consul" $ip_sans }}
 {{ .Data.issuing_ca }}{{ end }}
           EOF
       }
@@ -209,14 +209,14 @@ job "gitlab" {
         perms       = "400"
         data        = <<EOF
 {{ $ip_sans := printf "ip_sans=%s" (env "NOMAD_IP_https") }}
-{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=gitlab.service.consul" "alt_names=gitlab.${var.domain}" $ip_sans }}
+{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=gitlab.service.consul" $ip_sans }}
 {{ .Data.private_key }}{{ end }}
           EOF
       }
 
       resources {
-        cpu    = 650
-        memory = 4096
+        cpu    = 1897
+        memory = 4805
       }
 
       scaling "cpu" {

@@ -11,6 +11,11 @@ There is Terraform code here if you'd like to manage these with Terraform and th
 
 To use the QEMU driver, you'll have to expose HW assisted virtualization on the Nomad client VMs in ESXi.
 
+I run the following three jobs outside of Terraform, as they are necessary for terraform and the other jobs to be run:
+- [tfc-agent](./jobs/tfc-agent.nomad)
+- [storage-controller](./jobs/storage-controller.nomad)
+- [storage-node](./jobs/storage-node.nomad)
+
 ### Best practices
 - Explicitly specify the tag version for more controlled updates/upgrades.
 

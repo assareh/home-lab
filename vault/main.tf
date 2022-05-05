@@ -8,6 +8,28 @@ provider "vault" {
   # address = "https://vault.example.net:8200"
 }
 
+locals {
+  allowed_policies = concat(local.nomad_jobs, [
+    "boundary", # not imported yet
+    "consul-client-tls",
+    "pki" # not imported yet
+  ])
+  nomad_jobs = [
+    "consul-snapshot-agent",
+    "fluentd",
+    "gitlab-runner",
+    "google-dns-updater",
+    "homebridge",
+    "pihole",
+    "prometheus",
+    "splunk",
+    "telegraf",
+    "tfc-agent",
+    "tfc-ip-ranges-check",
+    "traefik"
+  ]
+}
+
 # this is for the nomad servers, per https://www.nomadproject.io/docs/integrations/vault-integration#token-role-based-integration
 resource "vault_token_auth_backend_role" "nomad-cluster" {
   role_name              = "nomad-cluster"
@@ -15,29 +37,62 @@ resource "vault_token_auth_backend_role" "nomad-cluster" {
   renewable              = true
   token_explicit_max_ttl = "0"
   token_period           = "259200"
-
-  allowed_policies = [
-    "boundary",
-    "consul",
-    "consul-client-tls",
-    "consul-snapshot-agent",
-    "fluentd",
-    "gitlab-runner",
-    "google-dns-updater",
-    "homebridge",
-    "pki",
-    "pihole",
-    "prometheus",
-    "splunk",
-    "telegraf",
-    "tfc-agent",
-    "tfc-ip-ranges-check",
-    "traefik",
-    "wireguard"
-  ]
+  allowed_policies       = local.allowed_policies
 }
 
-# add and import all these policies mentioned here
+data "vault_policy_document" "consul-client-tls" {
+  rule {
+    path         = "pki/int_consul/issue/dc1-client"
+    capabilities = ["update"]
+  }
+}
+
+resource "vault_policy" "consul-client-tls" {
+  name   = "consul-client-tls"
+  policy = data.vault_policy_document.consul-client-tls.hcl
+}
+
+data "vault_policy_document" "consul-server-tls" {
+  rule {
+    path         = "pki/int_consul/issue/dc1-server"
+    capabilities = ["update"]
+  }
+}
+
+resource "vault_policy" "consul-server-tls" {
+  name   = "consul-server-tls"
+  policy = data.vault_policy_document.consul-server-tls.hcl
+}
+
+data "vault_policy_document" "nomad_jobs" {
+  for_each = toset(local.nomad_jobs)
+
+  rule {
+    path         = "nomad/data/${each.key}"
+    capabilities = ["read"]
+  }
+}
+
+resource "vault_policy" "nomad_jobs" {
+  for_each = toset(local.nomad_jobs)
+
+  name   = each.key
+  policy = data.vault_policy_document.nomad_jobs[each.key].hcl
+}
+
+# the above are just the policies. the secrets must be created.
+# this could be used to create blank secrets
+// resource "vault_generic_secret" "nomad_jobs" {
+//   depends_on = [vault_mount.kvv2-nomad]
+//   for_each   = toset(local.nomad_jobs)
+
+//   path = "nomad/${each.key}"
+
+//   data_json = <<EOT
+// {
+// }
+// EOT
+// }
 
 # this is for the bootstrap script
 resource "vault_auth_backend" "approle" {
@@ -56,9 +111,9 @@ resource "vault_approle_auth_backend_role" "bootstrap" {
   token_policies = [
     "consul-client-tls",
     "consul-server-tls",
-    "gcp-kms",
-    "nomad-server",
-    "pki"
+    "gcp-kms", # not imported yet
+    "nomad-server", # not imported yet
+    "pki" # not imported yet
   ]
 }
 
@@ -88,6 +143,7 @@ resource "vault_jwt_auth_backend_role" "okta_admin" {
   role_name      = "okta_admin"
   role_type      = "oidc"
   token_policies = ["admin"]
+  token_ttl      = "86400"
   oidc_scopes    = ["openid", "profile", "email"]
   user_claim     = "email"
 
@@ -163,6 +219,9 @@ EOT
 resource "vault_mount" "kvv2-secret" {
   path = "secret"
   type = "kv-v2"
+  options = {
+    version = "2"
+  }
 }
 
 resource "vault_generic_secret" "devwebapp" {
@@ -174,4 +233,22 @@ resource "vault_generic_secret" "devwebapp" {
   "password": "salsa"
 }
 EOT
+}
+
+# nomad secrets
+resource "vault_mount" "kvv2-nomad" {
+  path = "nomad"
+  type = "kv-v2"
+  options = {
+    version = "2"
+  }
+}
+
+# packer secrets
+resource "vault_mount" "kvv2-packer" {
+  path = "packer"
+  type = "kv-v2"
+  options = {
+    version = "2"
+  }
 }
