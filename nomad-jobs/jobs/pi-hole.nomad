@@ -25,7 +25,6 @@ job "pihole" {
   }
 
   group "pihole" {
-    count          = 2
     shutdown_delay = "5s"
 
     network {
