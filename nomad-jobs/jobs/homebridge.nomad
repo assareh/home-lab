@@ -223,24 +223,6 @@ EOF
     ],
   "platforms": [
     {
-      "platform": "SmartThings-v2",
-      "name": "SmartThings-v2",
-      "app_url": "https://graph-na04-useast2.api.smartthings.com:443/api/smartapps/installations/",
-      "app_id": "{{with secret "nomad/data/homebridge"}}{{.Data.data.ST_APP_ID}}{{end}}",
-      "access_token": "{{with secret "nomad/data/homebridge"}}{{.Data.data.ST_ACCESS_TOKEN}}{{end}}",
-      "temperature_unit": "F",
-      "validateTokenId": false,
-      "logConfig": {
-        "debug": false,
-        "showChanges": true,
-        "hideTimestamp": false,
-        "hideNamePrefix": false,
-        "file": {
-          "enabled": true
-        }
-      }
-    },
-    {
       "platform": "config",
       "name": "Config",
       "port": {{ env "NOMAD_HOST_PORT_https" }},
@@ -248,11 +230,6 @@ EOF
         "key": "/secrets/key.pem",
         "cert": "/secrets/cert.pem"
         }
-    },
-    {
-      "platform": "myQ",
-      "email": "{{with secret "nomad/data/homebridge"}}{{.Data.data.MYQ_USERNAME}}{{end}}",
-      "password": "{{with secret "nomad/data/homebridge"}}{{.Data.data.MYQ_PASSWORD}}{{end}}"
     }
   ]
 }
