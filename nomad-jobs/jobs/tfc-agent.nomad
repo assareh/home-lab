@@ -16,10 +16,10 @@ job "tfc-agent" {
       driver = "exec"
 
       artifact {
-        source = "https://releases.hashicorp.com/tfc-agent/1.0.1/tfc-agent_1.0.1_linux_amd64.zip"
+        source = "https://releases.hashicorp.com/tfc-agent/1.1.0/tfc-agent_1.1.0_linux_amd64.zip"
 
         options {
-          checksum = "sha256:0cb56f9e39842e167ca790a8eb5030cab3cb74caae3abe63e272de4a286625f6"
+          checksum = "sha256:1baf4ec65eac52829a5db88ba6099977e2aa0416598a20b6875a2c0be41846d1"
         }
       }
 
@@ -42,8 +42,8 @@ job "tfc-agent" {
       }
 
       resources {
-        cpu    = 200
-        memory = 345
+        cpu    = 57
+        memory = 512
       }
 
       scaling "cpu" {
@@ -57,22 +57,6 @@ job "tfc-agent" {
           check "95pct" {
             strategy "app-sizing-percentile" {
               percentile = "95"
-            }
-          }
-        }
-      }
-
-      scaling "mem" {
-        enabled = true
-        max     = 2048
-
-        policy {
-          cooldown            = "72h"
-          evaluation_interval = "72h"
-
-          check "95pct" {
-            strategy "app-sizing-percentile" {
-              percentile = "99"
             }
           }
         }

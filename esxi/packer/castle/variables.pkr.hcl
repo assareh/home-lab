@@ -1,16 +1,16 @@
 # Read the documentation for locals blocks here:
 # https://www.packer.io/docs/templates/hcl_templates/blocks/locals
 locals {
-  consul_gossip   = vault("/packer/data/consul", "gossip")
-  consul_license  = vault("/packer/data/consul", "license")
-  esxi_password   = vault("/packer/data/esxi", "esxi_password")
-  esxi_username   = vault("/packer/data/esxi", "esxi_username")
-  nomad_gossip    = vault("/packer/data/nomad", "gossip")
-  nomad_license   = vault("/packer/data/nomad", "license")
-  ssh_password    = vault("/packer/data/ubuntu", "castle")
-  timestamp       = regex_replace(timestamp(), "[- TZ:]", "")
-  vault_license   = vault("/packer/data/vault", "license")
-  vm_name         = "Castle-${local.timestamp}"
+  consul_gossip  = vault("/packer/data/consul", "gossip")
+  consul_license = vault("/packer/data/consul", "license")
+  esxi_password  = vault("/packer/data/esxi", "esxi_password")
+  esxi_username  = vault("/packer/data/esxi", "esxi_username")
+  nomad_gossip   = vault("/packer/data/nomad", "gossip")
+  nomad_license  = vault("/packer/data/nomad", "license")
+  ssh_password   = vault("/packer/data/ubuntu", "castle")
+  timestamp      = regex_replace(timestamp(), "[- TZ:]", "")
+  vault_license  = vault("/packer/data/vault", "license")
+  vm_name        = "Castle-${local.timestamp}"
 }
 
 # All generated input variables will be of 'string' type as this is how Packer JSON
@@ -27,7 +27,7 @@ variable "cni_version" {
 
 variable "consul_version" {
   type    = string
-  default = "1.11.1+ent"
+  default = "1.12.0+ent"
 }
 
 variable "containerd_version" {
@@ -40,6 +40,16 @@ variable "esxi_host" {
   default = "esxi.local"
 }
 
+variable "iso_checksum" {
+  type    = string
+  default = "sha256:28ccdb56450e643bad03bb7bcf7507ce3d8d90e8bf09e38f6bd9ac298a98eaad"
+}
+
+variable "iso_url" {
+  type    = string
+  default = "https://releases.ubuntu.com/20.04/ubuntu-20.04.4-live-server-amd64.iso"
+}
+
 variable "network_name" {
   type    = string
   default = "VM Network"
@@ -47,7 +57,7 @@ variable "network_name" {
 
 variable "nomad_version" {
   type    = string
-  default = "1.2.3+ent"
+  default = "1.2.6+ent"
 }
 
 variable "remote_datastore" {
@@ -62,12 +72,12 @@ variable "ssh_username" {
 
 variable "vault_version" {
   type    = string
-  default = "1.9.2+ent"
+  default = "1.10.2+ent"
 }
 
 variable "vm_cpu_num" {
   type    = string
-  default = "1"
+  default = "2"
 }
 
 variable "vm_disk_size" {

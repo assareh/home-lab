@@ -77,7 +77,14 @@ job "traefik" {
         "traefik.http.routers.traefik.entryPoints=websecure",
         "traefik.http.routers.traefik.tls=true",
         "traefik.http.routers.traefik.service=api@internal",
-        "traefik.http.routers.traefik.rule=Host(`traefik.${var.domain}`) && PathPrefix(`/api`, `/dashboard`)",
+        "traefik.http.routers.traefik.rule=Host(`traefik.${var.domain}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))",
+
+        "traefik.http.routers.traefik_http.rule=Host(`traefik.${var.domain}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))",
+        "traefik.http.routers.traefik_http.entrypoints=web",
+        "traefik.http.routers.traefik_http.middlewares=https_redirect",
+
+        "traefik.http.middlewares.https_redirect.redirectscheme.scheme=https",
+        "traefik.http.middlewares.https_redirect.redirectscheme.permanent=true",
       ]
 
       check {
@@ -208,7 +215,7 @@ job "traefik" {
   
 [api]
   dashboard = true
-  insecure  = true
+  #insecure  = true
 
 [certificatesResolvers.letsencrypt.acme]
   email = "andy@${var.email}"
@@ -281,7 +288,7 @@ EOF
         destination = "secrets/gce-service-account.json"
         perms       = "400"
         data        = <<EOF
-{{with secret "nomad/data/gcloud"}}{{.Data.data.GCE_SERVICE_ACCOUNT}}{{end}}
+{{with secret "nomad/data/traefik"}}{{.Data.data.GCE_SERVICE_ACCOUNT}}{{end}}
 EOF
       }
 

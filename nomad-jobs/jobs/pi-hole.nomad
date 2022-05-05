@@ -53,7 +53,7 @@ job "pihole" {
       driver = "docker"
 
       config {
-        image        = "pihole/pihole:2021.10.1"
+        image        = "pihole/pihole:2022.02.1"
         network_mode = "host"
         volumes = [
           "local/etc-dnsmasq.d/00-custom.conf:/etc/dnsmasq.d/00-custom.conf",
@@ -81,8 +81,8 @@ EOF
       }
 
       resources {
-        cpu    = 650
-        memory = 69
+        cpu    = 1380
+        memory = 78
       }
 
       template {
@@ -92,9 +92,22 @@ EOF
 # Enable forward lookup of the 'consul' domain:
 {{range service "consul"}}server=/consul/{{.Address}}#8600
 {{end}}
+# Uncomment and modify as appropriate to enable reverse DNS lookups for
+# common netblocks found in RFC 1918, 5735, and 6598:
+#rev-server=0.0.0.0/8,127.0.0.1#8600
+#rev-server=10.0.0.0/8,127.0.0.1#8600
+#rev-server=100.64.0.0/10,127.0.0.1#8600
+#rev-server=127.0.0.1/8,127.0.0.1#8600
+#rev-server=169.254.0.0/16,127.0.0.1#8600
+#rev-server=172.16.0.0/12,127.0.0.1#8600
+rev-server=192.168.0.0/16,127.0.0.1#8600
+#rev-server=224.0.0.0/4,127.0.0.1#8600
+#rev-server=240.0.0.0/4,127.0.0.1#8600
+
 # Local records
-address=/traefik.${var.domain}/{{range service "traefik-websecure"}}{{.Address}}{{end}}
 address=/pihole.${var.domain}/{{range service "traefik-websecure"}}{{.Address}}{{end}}
+address=/traefik.${var.domain}/{{range service "traefik-websecure"}}{{.Address}}{{end}}
+address=/vault.${var.domain}/{{range service "active.vault"}}{{.Address}}{{end}}
 {{range $tag, $services := services | byTag}}{{ if eq $tag "dnsmasq.cname=true" }}{{range $services}}address=/{{.Name}}.${var.domain}/{{range service "traefik-websecure"}}{{.Address}}{{end}}
 {{end}}{{end}}{{end}}
 EOF
@@ -105,26 +118,6 @@ EOF
         change_mode = "noop"
         data        = <<EOF
 PRIVACYLEVEL=0
-EOF
-      }
-
-      template {
-        destination = "local/consul-udp-check"
-        perms       = "755"
-        change_mode = "noop"
-        data        = <<EOF
-#!/bin/bash
-
-set -uo pipefail
-
-nc -zuv $1 $2
-
-# Exit code 1 from netcat denotes a failure in network connectivity. We wrap this and send an exit code above 1, 
-# say 2, because, consul's script check considers exit code 1 as a WARNING and exit code 0 as a SUCCESS and anything
-# other than that is considered a FAILURE.
-if [[ "$?" != "0" ]]; then
- exit 2
-fi
 EOF
       }
 
@@ -158,15 +151,6 @@ EOF
       service {
         name = "dns"
         port = "dns"
-
-        // check { # this broke recently
-        //   name     = "service: dns udp check"
-        //   type     = "script"
-        //   command  = "/local/consul-udp-check"
-        //   args     = ["localhost", "${NOMAD_PORT_dns}"]
-        //   interval = "10s"
-        //   timeout  = "2s"
-        // }
 
         check {
           name     = "service: dns tcp check"
@@ -283,17 +267,17 @@ EOF
       }
 
       artifact {
-        source      = "https://github.com/cloudflare/cloudflared/releases/download/2021.9.2/cloudflared-linux-amd64"
+        source      = "https://github.com/cloudflare/cloudflared/releases/download/2022.3.1/cloudflared-linux-amd64"
         destination = "/tmp/cloudflared"
 
         options {
-          checksum = "sha256:73c88c9b9ae3211f9e90dba3ee42240e10875a2080a78a1cb9b3662493d4471d"
+          checksum = "sha256:42b3b77560792d4c1e2f1d1caf2249e52acd48da65a8837d8d1a2849b384e58c"
         }
       }
 
       resources {
-        cpu    = 20
-        memory = 26
+        cpu    = 57
+        memory = 23
       }
 
       service {
@@ -382,7 +366,7 @@ EOF
       }
 
       config {
-        image = "ekofr/pihole-exporter:v0.0.11"
+        image = "ekofr/pihole-exporter:v0.3.0"
         ports = ["prometheus_pihole_exporter"]
       }
 
@@ -394,8 +378,8 @@ EOF
       }
 
       resources {
-        cpu    = 20
-        memory = 20 # repeat oom killed at 11
+        cpu    = 57
+        memory = 12 # repeat oom killed at 11
       }
 
       scaling "cpu" {

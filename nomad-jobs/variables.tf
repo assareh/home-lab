@@ -24,6 +24,11 @@ variable "google_project" {
   type        = string
 }
 
+variable "nomad_addr" {
+  description = "Nomad server address"
+  type        = string
+}
+
 variable "subnet_cidr" {
   description = "First three octets of subnet"
   type        = string

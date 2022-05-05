@@ -3,7 +3,7 @@ terraform {
   required_providers {
     esxi = {
       source  = "registry.terraform.io/josenk/esxi"
-      version = "1.8.2"
+      version = "~> 1.10.0"
       #
       # For more information, see the provider source documentation:
       # https://github.com/josenk/terraform-provider-esxi

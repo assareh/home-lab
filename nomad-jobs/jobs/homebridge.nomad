@@ -88,7 +88,7 @@ job "homebridge" {
       }
 
       config {
-        image        = "docker-registry.service.consul:5000/homebridge:4.0.0" # using custom image with python requests and hvac
+        image        = "docker-registry.service.consul:5000/homebridge:latest" # using custom image with python requests and hvac
         network_mode = "host"
         volumes = [
           "local/config.json:/homebridge/config.json",
@@ -114,17 +114,16 @@ EOF
 
       template {
         data = <<EOF
-{
-    "mdns": {
-        "interface": "{{ env "attr.unique.network.ip-address" }}"
-    },
-    "bridge": {
-        "name": "Homebridge",
-        "username": "{{with secret "nomad/data/homebridge"}}{{.Data.data.BRIDGE_USERNAME}}{{end}}",
-        "port": "{{with secret "nomad/data/homebridge"}}{{.Data.data.BRIDGE_PORT}}{{end}}",
-        "pin": "{{with secret "nomad/data/homebridge"}}{{.Data.data.BRIDGE_PIN}}{{end}}"
-    },
-    "accessories": [
+    {
+      "bridge": 
+        {
+          "name": "Homebridge",
+          "bind": "{{ env "attr.unique.network.ip-address" }}",
+          "username": "{{with secret "nomad/data/homebridge"}}{{.Data.data.BRIDGE_USERNAME}}{{end}}",
+          "port": {{with secret "nomad/data/homebridge"}}{{.Data.data.BRIDGE_PORT}}{{end}},
+          "pin": "{{with secret "nomad/data/homebridge"}}{{.Data.data.BRIDGE_PIN}}{{end}}"
+        },
+      "accessories": [
         {
             "accessory": "Script2",
             "name": "Color Cycle Leo's Lamp",
@@ -224,6 +223,24 @@ EOF
     ],
   "platforms": [
     {
+      "platform": "SmartThings-v2",
+      "name": "SmartThings-v2",
+      "app_url": "https://graph-na04-useast2.api.smartthings.com:443/api/smartapps/installations/",
+      "app_id": "{{with secret "nomad/data/homebridge"}}{{.Data.data.ST_APP_ID}}{{end}}",
+      "access_token": "{{with secret "nomad/data/homebridge"}}{{.Data.data.ST_ACCESS_TOKEN}}{{end}}",
+      "temperature_unit": "F",
+      "validateTokenId": false,
+      "logConfig": {
+        "debug": false,
+        "showChanges": true,
+        "hideTimestamp": false,
+        "hideNamePrefix": false,
+        "file": {
+          "enabled": true
+        }
+      }
+    },
+    {
       "platform": "config",
       "name": "Config",
       "port": {{ env "NOMAD_HOST_PORT_https" }},
@@ -231,6 +248,11 @@ EOF
         "key": "/secrets/key.pem",
         "cert": "/secrets/cert.pem"
         }
+    },
+    {
+      "platform": "myQ",
+      "email": "{{with secret "nomad/data/homebridge"}}{{.Data.data.MYQ_USERNAME}}{{end}}",
+      "password": "{{with secret "nomad/data/homebridge"}}{{.Data.data.MYQ_PASSWORD}}{{end}}"
     }
   ]
 }
@@ -244,9 +266,9 @@ EOF
         perms       = "640"
         data        = <<EOF
 {{ $ip_sans := printf "ip_sans=%s" (env "NOMAD_IP_https") }}
-{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=homebridge.service.consul" "alt_names=homebridge.${var.domain}" $ip_sans }}
+{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=homebridge.service.consul" $ip_sans }}
 {{ .Data.certificate }}{{ end }}
-{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=homebridge.service.consul" "alt_names=homebridge.${var.domain}" $ip_sans }}
+{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=homebridge.service.consul" $ip_sans }}
 {{ .Data.issuing_ca }}{{ end }}
           EOF
       }
@@ -256,14 +278,14 @@ EOF
         perms       = "440"
         data        = <<EOF
 {{ $ip_sans := printf "ip_sans=%s" (env "NOMAD_IP_https") }}
-{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=homebridge.service.consul" "alt_names=homebridge.${var.domain}" $ip_sans }}
+{{ with secret "pki/intermediate/issue/${var.vault_cert_role}" "common_name=homebridge.service.consul" $ip_sans }}
 {{ .Data.private_key }}{{ end }}
           EOF
       }
 
       resources {
-        cpu    = 75
-        memory = 244
+        cpu    = 57
+        memory = 239
       }
 
       scaling "cpu" {

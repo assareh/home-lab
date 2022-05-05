@@ -1,8 +1,8 @@
+api_addr = "https://ADDRESS:8200"
+
+cluster_addr = "https://ADDRESS:8201"
+
 cluster_name = "castle"
-
-ui = true
-
-max_lease_ttl = "8760h"
 
 license_path = "/etc/vault.d/license.hclic"
 
@@ -12,8 +12,18 @@ listener "tcp" {
   tls_cert_file            = "/opt/vault/tls/tls.crt"
   tls_key_file             = "/opt/vault/tls/tls.key"
   tls_disable_client_certs = "true"
+}
 
-  proxy_protocol_behavior = "use_always"
+max_lease_ttl = "8760h"
+
+plugin_directory = "/mnt/data/vault/plugins"
+
+seal "gcpckms" {
+  credentials = "you must provide"
+  project     = "you must provide"
+  region      = "us-west1"
+  key_ring    = "vault-keyring"
+  crypto_key  = "Vault"
 }
 
 storage "consul" {
@@ -31,8 +41,4 @@ telemetry {
   prometheus_retention_time = "0h"
 }
 
-api_addr = "https://vault.service.consul:8200"
-
-cluster_addr = "https://ADDRESS:8201"
-
-plugin_directory = "/mnt/data/vault/plugins"
+ui = true

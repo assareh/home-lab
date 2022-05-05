@@ -21,8 +21,8 @@ job "internet-monitoring" {
       }
 
       resources {
-        cpu    = 20
-        memory = 27
+        cpu    = 57
+        memory = 26
       }
 
       service {
@@ -96,8 +96,8 @@ job "internet-monitoring" {
       }
 
       resources {
-        cpu    = 100
-        memory = 23
+        cpu    = 287
+        memory = 20
       }
 
       template {

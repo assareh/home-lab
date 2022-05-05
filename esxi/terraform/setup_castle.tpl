@@ -38,6 +38,8 @@ cd /home/${ssh_username} && vault agent -config vault-agent-bootstrap.hcl
 
 # install vault certificates and kms creds
 sudo mv tls.* /opt/vault/tls/.
+sudo chown vault:vault /opt/vault/tls/*
+sudo chmod 400 /opt/vault/tls/*
 sudo mkdir -p /usr/vault
 sudo mv vault-kms-264205-019d22c9f50c.json /usr/vault/.
 sudo chown -R vault:vault /usr/vault

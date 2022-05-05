@@ -20,6 +20,16 @@ variable "esxi_host" {
   default = "esxi.local"
 }
 
+variable "iso_checksum" {
+  type    = string
+  default = "sha256:28ccdb56450e643bad03bb7bcf7507ce3d8d90e8bf09e38f6bd9ac298a98eaad"
+}
+
+variable "iso_url" {
+  type    = string
+  default = "https://releases.ubuntu.com/20.04/ubuntu-20.04.4-live-server-amd64.iso"
+}
+
 variable "network_name" {
   type    = string
   default = "VM Network"

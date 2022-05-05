@@ -74,8 +74,8 @@ job "jenkins" {
       }
 
       resources {
-        cpu    = 800
-        memory = 882
+        cpu    = 57
+        memory = 691
       }
 
       scaling "cpu" {

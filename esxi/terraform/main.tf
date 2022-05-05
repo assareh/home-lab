@@ -23,10 +23,11 @@ provider "esxi" {
 resource "esxi_guest" "blue" {
   for_each = var.nodes_blue
 
-  guest_name    = each.key
-  disk_store    = var.esxi_datastore
-  clone_from_vm = var.template_blue
-  power         = "on"
+  guest_name     = each.key
+  disk_store     = var.esxi_datastore
+  clone_from_vm  = var.template_blue
+  boot_disk_type = "thin"
+  power          = "on"
 
   network_interfaces {
     mac_address     = each.value
@@ -54,10 +55,11 @@ resource "esxi_guest" "blue" {
 resource "esxi_guest" "green" {
   for_each = var.nodes_green
 
-  guest_name    = each.key
-  disk_store    = var.esxi_datastore
-  clone_from_vm = var.template_green
-  power         = "on"
+  guest_name     = each.key
+  disk_store     = var.esxi_datastore
+  clone_from_vm  = var.template_green
+  boot_disk_type = "thin"
+  power          = "on"
 
   network_interfaces {
     mac_address     = each.value
@@ -90,10 +92,11 @@ data "template_file" "setup_castle" {
 }
 
 resource "esxi_guest" "nas" {
-  guest_name    = lookup(var.node_nas, "name")
-  disk_store    = var.esxi_datastore
-  clone_from_vm = var.template_nas
-  power         = "on"
+  guest_name     = lookup(var.node_nas, "name")
+  disk_store     = var.esxi_datastore
+  clone_from_vm  = var.template_nas
+  boot_disk_type = "thin"
+  power          = "on"
 
   lifecycle {
     prevent_destroy = true
@@ -117,7 +120,7 @@ resource "esxi_guest" "nas" {
 
   provisioner "remote-exec" {
     inline = [
-      "sudo zpool create data mirror /dev/sdb /dev/sdc",
+      "sudo zpool create -f data mirror /dev/sdb /dev/sdc",
       "echo \"/data    ${var.nas_allow_ip_cidr}(rw,sync,no_root_squash,no_subtree_check)\" | sudo tee -a /etc/exports",
       "sudo systemctl restart nfs-kernel-server"
     ]
@@ -155,10 +158,11 @@ resource "esxi_virtual_disk" "nas_disk2" {
 
 # change this to for_each
 resource "esxi_guest" "k3s" {
-  guest_name    = lookup(var.node_k3s, "name")
-  disk_store    = var.esxi_datastore
-  clone_from_vm = var.template_k3s
-  power         = "on"
+  guest_name     = lookup(var.node_k3s, "name")
+  disk_store     = var.esxi_datastore
+  clone_from_vm  = var.template_k3s
+  boot_disk_type = "thin"
+  power          = "on"
 
   network_interfaces {
     mac_address     = lookup(var.node_k3s, "mac_address")

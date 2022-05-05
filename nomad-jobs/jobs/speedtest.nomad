@@ -56,13 +56,13 @@ job "speedtest" {
       driver = "docker"
 
       config {
-        image = "adolfintel/speedtest:5.2.4"
+        image = "adolfintel/speedtest"
         ports = ["http"]
       }
 
       resources {
         cpu    = 20
-        memory = 14
+        memory = 56
       }
     }
   }
