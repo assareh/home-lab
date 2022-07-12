@@ -34,8 +34,8 @@ job "influxdb" {
       }
 
       resources {
-        cpu    = 1000
-        memory = 4096
+        cpu    = 1437
+        memory = 2896
       }
 
       service {

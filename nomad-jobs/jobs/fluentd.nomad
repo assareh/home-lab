@@ -79,7 +79,7 @@ EOF
 
       resources {
         cpu    = 57
-        memory = 92
+        memory = 105
       }
 
       scaling "cpu" {

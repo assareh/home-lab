@@ -4,6 +4,8 @@ job "storage-controller" {
   priority = 100
 
   group "controller" {
+    count = 2
+
     task "controller" {
       driver = "docker"
 
@@ -18,8 +20,6 @@ job "storage-controller" {
         ]
 
         network_mode = "host" # required so the mount works even after stopping the container
-
-        privileged = true
       }
 
       csi_plugin {

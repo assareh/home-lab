@@ -25,6 +25,9 @@ job "storage-node" {
 
         network_mode = "host" # required so the mount works even after stopping the container
 
+        # all CSI node plugins will need to run as privileged tasks
+        # so they can mount volumes to the host. controller plugins
+        # do not need to be privileged.
         privileged = true
       }
 

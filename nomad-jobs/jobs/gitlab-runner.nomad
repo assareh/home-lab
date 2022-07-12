@@ -57,7 +57,7 @@ job "gitlab-runner" {
       }
 
       resources {
-        cpu    = 57 # this is not the runner, this is the helper - which spawns other containers to do worker
+        cpu    = 172 # this is not the runner, this is the helper - which spawns other containers to do worker
         memory = 14
       }
 

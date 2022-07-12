@@ -41,7 +41,7 @@ EOF
 set -x
 
 IP_RANGES=`(curl --silent \
-  -H "If-Modified-Since: Thu, 7 Oct 2021 15:10:05 GMT" \
+  -H "If-Modified-Since: Sat, 4 Jun 2022 15:10:05 GMT" \
   https://app.terraform.io/api/meta/ip-ranges | jq -r .vcs)`
 
 if [ -z "${IP_RANGES}" ];

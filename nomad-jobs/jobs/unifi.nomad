@@ -154,7 +154,7 @@ job "unifi" {
 
       resources {
         cpu    = 172
-        memory = 1124
+        memory = 977
       }
 
       scaling "cpu" {

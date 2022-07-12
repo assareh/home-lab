@@ -1,0 +1,14 @@
+# Full configuration options can be found at:
+# https://www.nomadproject.io/docs/commands/volume/create#volume-specification
+
+id           = "scratch"
+name         = "scratch"
+type         = "csi"
+plugin_id    = "nas"
+capacity_max = "5G"
+capacity_min = "500M"
+
+capability {
+  access_mode     = "multi-node-multi-writer"
+  attachment_mode = "file-system"
+}

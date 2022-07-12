@@ -3,6 +3,11 @@ variable "domain" {
   default = "hashidemos.io"
 }
 
+variable "subnet_cidr" {
+  type    = string
+  default = "192.168.0"
+}
+
 variable "vault_cert_role" {
   type    = string
   default = "hashidemos-io"
@@ -74,6 +79,38 @@ job "homebridge" {
       }
     }
 
+    task "keepalived" {
+      driver = "docker"
+
+      lifecycle {
+        hook    = "poststart"
+        sidecar = true
+      }
+
+      env {
+        KEEPALIVED_INTERFACE     = "ens160"
+        KEEPALIVED_ROUTER_ID     = "52"
+        KEEPALIVED_STATE         = "BACKUP"
+        KEEPALIVED_UNICAST_PEERS = ""
+        KEEPALIVED_VIRTUAL_IPS   = "${var.subnet_cidr}.201"
+      }
+
+      config {
+        image        = "osixia/keepalived:2.0.20"
+        network_mode = "host"
+        cap_add = [
+          "NET_ADMIN",
+          "NET_BROADCAST",
+          "NET_RAW"
+        ]
+      }
+
+      resources {
+        cpu    = 20
+        memory = 10
+      }
+    }
+
     task "homebridge" {
       driver = "docker"
 
@@ -118,7 +155,7 @@ EOF
       "bridge": 
         {
           "name": "Homebridge",
-          "bind": "{{ env "attr.unique.network.ip-address" }}",
+          "bind": "${var.subnet_cidr}.201",
           "username": "{{with secret "nomad/data/homebridge"}}{{.Data.data.BRIDGE_USERNAME}}{{end}}",
           "port": {{with secret "nomad/data/homebridge"}}{{.Data.data.BRIDGE_PORT}}{{end}},
           "pin": "{{with secret "nomad/data/homebridge"}}{{.Data.data.BRIDGE_PIN}}{{end}}"

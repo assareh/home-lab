@@ -52,7 +52,7 @@ job "pihole" {
       driver = "docker"
 
       config {
-        image        = "pihole/pihole:2022.02.1"
+        image        = "pihole/pihole:2022.04.3"
         network_mode = "host"
         volumes = [
           "local/etc-dnsmasq.d/00-custom.conf:/etc/dnsmasq.d/00-custom.conf",
@@ -81,7 +81,7 @@ EOF
 
       resources {
         cpu    = 1380
-        memory = 78
+        memory = 87
       }
 
       template {
@@ -235,7 +235,7 @@ EOF
 
       resources {
         cpu    = 20
-        memory = 10
+        memory = 20
       }
     }
 
@@ -276,7 +276,7 @@ EOF
 
       resources {
         cpu    = 57
-        memory = 23
+        memory = 29
       }
 
       service {
@@ -378,7 +378,7 @@ EOF
 
       resources {
         cpu    = 57
-        memory = 12 # repeat oom killed at 11
+        memory = 20
       }
 
       scaling "cpu" {
