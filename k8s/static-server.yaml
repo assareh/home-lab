@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Service
+metadata:
+  # This name will be the service name in Consul.
+  name: static-server
+spec:
+  selector:
+    app: static-server
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: static-server
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: static-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: static-server
+  template:
+    metadata:
+      name: static-server
+      labels:
+        app: static-server
+      annotations:
+        'consul.hashicorp.com/connect-inject': 'true'
+    spec:
+      containers:
+        - name: static-server
+          image: hashicorp/http-echo:latest
+          args:
+            - -text="hello world"
+            - -listen=:8080
+          ports:
+            - containerPort: 8080
+              name: http
+      # If ACLs are enabled, the serviceAccountName must match the Consul service name.
+      serviceAccountName: static-server
+

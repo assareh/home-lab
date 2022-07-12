@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Service
+metadata:
+  # This name will be the service name in Consul.
+  name: count-api
+spec:
+  selector:
+    app: count-api
+  ports:
+    - port: 80
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: count-api
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: count-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: count-api
+  template:
+    metadata:
+      name: count-api
+      labels:
+        app: count-api
+      annotations:
+        'consul.hashicorp.com/connect-inject': 'true'
+    spec:
+      containers:
+        - name: count-api
+          image: hashicorpnomad/counter-api:v1
+          env:
+          - name: PORT
+            value: "80"
+      # If ACLs are enabled, the serviceAccountName must match the Consul service name.
+      serviceAccountName: count-api
+

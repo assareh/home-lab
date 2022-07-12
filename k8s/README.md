@@ -1,6 +1,27 @@
 # K8s Stuff
 
-## Consul Installation Steps
+## Consul Installation Steps (Admin Partitions)
+I am installing Consul on K3s as the admin partition `k3s`. [Admin Partitions](https://www.consul.io/docs/enterprise/admin-partitions) require Consul 1.11.0+. 
+
+1. Create the federation secret on your target kubernetes cluster: (this requires your Consul CA cert and key and gossip encryption key)
+```
+kubectl create secret generic consul-federation \
+--from-literal="caCert=$(cat pki_int_consul_ca_cert.pem)" \
+--from-literal="caKey=$(cat pki_int_consul_ca_key.pem)" \
+--from-literal="gossipEncryptionKey=`pbpaste`"
+```
+
+2. Create the enterprise license secret:
+```
+kubectl create secret generic consul-license --from-literal="key="`pbpaste`""
+```
+
+3. Install Consul:
+```
+helm install -f values-consul-admin-part.yaml consul hashicorp/consul
+```
+
+## Consul Installation Steps (WAN Federation)
 I am installing Consul on K3s as `dc2`, and federating with the `dc1` Consul cluster running on VMs.
 
 1. Create the federation secret on your target kubernetes cluster: (this requires your Consul CA cert and key and gossip encryption key)
@@ -18,7 +39,7 @@ kubectl create secret generic consul-license --from-literal="key="`pbpaste`""
 
 3. Install Consul:
 ```
-helm install -f values-consul.yaml consul hashicorp/consul
+helm install -f values-consul-federation.yaml consul hashicorp/consul
 ```
 
 ### Links and References

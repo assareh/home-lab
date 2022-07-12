@@ -1,0 +1,17 @@
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceDefaults
+metadata:
+  name: count-api
+spec:
+  protocol: http
+  meshGateway: 
+    mode: local
+---
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ServiceDefaults
+metadata:
+  name: dashboard
+spec:
+  protocol: http
+  meshGateway: 
+    mode: local

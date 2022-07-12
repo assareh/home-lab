@@ -1,0 +1,10 @@
+apiVersion: consul.hashicorp.com/v1alpha1
+kind: ExportedServices
+metadata:
+  name: k3s
+spec:
+  services:
+  - name: count-api
+    namespace: default
+    consumers:
+    - partition: k3s

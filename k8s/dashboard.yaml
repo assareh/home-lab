@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dashboard
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard
+spec:
+  selector:
+    app: dashboard
+  ports:
+  - port: 9002
+    targetPort: 9002
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: dashboard
+  name: dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dashboard
+  template:
+    metadata:
+      annotations:
+        'consul.hashicorp.com/connect-inject': 'true'
+        'consul.hashicorp.com/connect-service-upstreams': 'count-api.default.default:9001'
+      labels:
+        app: dashboard
+    spec:
+      containers:
+      - name: dashboard
+        image: hashicorp/dashboard-service:0.0.4
+        ports:
+        - containerPort: 9002
+        env:
+        - name: COUNTING_SERVICE_URL
+          value: 'http://localhost:9001'

@@ -1,0 +1,44 @@
+global:
+  adminPartitions:
+    enabled: true
+    name: k3s
+  enableConsulNamespaces: true
+  name: consul
+  image: 'hashicorp/consul-enterprise:1.12.2-ent'
+  enterpriseLicense:
+    secretName: 'consul-license'
+    secretKey: 'key'
+  tls:
+    enabled: true
+    caCert:
+      secretName: consul-federation
+      secretKey: caCert
+    caKey:
+      secretName: consul-federation
+      secretKey: caKey
+  gossipEncryption:
+    secretName: consul-federation
+    secretKey: gossipEncryptionKey
+externalServers:
+  enabled: true
+  hosts: ["consul.service.consul"]
+  tlsServerName: server.dc1.consul
+  # If you are using a NodePort service, you need to specify the port set in the
+  # server's externalServers.httpsPort attribute.
+  # httpsPort: «https port value for consul-partition-service»
+client:
+  exposeGossipPorts: true
+  join: ["consul.service.consul"]
+server:
+  enabled: false
+ui:
+  enabled: true
+connectInject:
+  enabled: true
+  envoyExtraArgs: "--component-log-level upstream:debug,http:debug,router:debug,config:debug"
+controller:
+  enabled: true
+  replicas: 1
+meshGateway:
+  enabled: true
+  replicas: 1
