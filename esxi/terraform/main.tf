@@ -40,7 +40,7 @@ resource "esxi_guest" "blue" {
       "sudo hostnamectl set-hostname ${lower(each.key)}",
       "echo '127.0.1.1       ${lower(each.key)}.unassigned-domain        ${lower(each.key)}' | sudo tee -a /etc/hosts",
       "echo ${vault_approle_auth_backend_role_secret_id.wrapped_secret_id[index(local.blue_hostnames, each.key)].wrapping_token} >> /home/${var.ssh_username}/secret_id",
-      data.template_file.setup_castle.rendered
+      templatefile("${path.module}/setup_castle.tpl", { ssh_username = var.ssh_username })
     ]
 
     connection {
@@ -72,7 +72,7 @@ resource "esxi_guest" "green" {
       "sudo hostnamectl set-hostname ${lower(each.key)}",
       "echo '127.0.1.1       ${lower(each.key)}.unassigned-domain        ${lower(each.key)}' | sudo tee -a /etc/hosts",
       "echo ${vault_approle_auth_backend_role_secret_id.wrapped_secret_id[index(local.green_hostnames, each.key)].wrapping_token} >> /home/${var.ssh_username}/secret_id",
-      data.template_file.setup_castle.rendered
+      templatefile("${path.module}/setup_castle.tpl", { ssh_username = var.ssh_username })
     ]
 
     connection {
@@ -81,13 +81,6 @@ resource "esxi_guest" "green" {
       private_key = var.ssh_private_key
       host        = self.ip_address
     }
-  }
-}
-
-data "template_file" "setup_castle" {
-  template = file("${path.module}/setup_castle.tpl")
-  vars = {
-    ssh_username = var.ssh_username
   }
 }
 
