@@ -22,7 +22,7 @@ job "internet-monitoring" {
 
       resources {
         cpu    = 57
-        memory = 26
+        memory = 28
       }
 
       service {

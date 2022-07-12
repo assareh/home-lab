@@ -37,15 +37,15 @@ sed -i 's/HOSTNAME/'"$HOST"'/g' /home/${ssh_username}/consul-client-key.tpl
 cd /home/${ssh_username} && vault agent -config vault-agent-bootstrap.hcl
 
 # install vault certificates and kms creds
-sudo mv tls.* /opt/vault/tls/.
-sudo chown vault:vault /opt/vault/tls/*
-sudo chmod 400 /opt/vault/tls/*
+sudo mv tls.* /opt/vault/tls/
+sudo chown vault:vault /opt/vault/tls/tls.*
+sudo chmod 400 /opt/vault/tls/tls.*
 sudo mkdir -p /usr/vault
-sudo mv vault-kms-264205-019d22c9f50c.json /usr/vault/.
+sudo mv vault-kms-264205-019d22c9f50c.json /usr/vault/
 sudo chown -R vault:vault /usr/vault
 sudo chmod -R 400 /usr/vault/vault-kms-264205-019d22c9f50c.json
-sudo mv /home/${ssh_username}/dc1-client-consul.pem /etc/vault.d/.
-sudo mv /home/${ssh_username}/dc1-client-consul-key.pem /etc/vault.d/.
+sudo mv /home/${ssh_username}/dc1-client-consul.pem /etc/vault.d/
+sudo mv /home/${ssh_username}/dc1-client-consul-key.pem /etc/vault.d/
 
 # save token for nomad
 mv vault-token-via-agent /home/${ssh_username}/nomad.env
@@ -54,8 +54,8 @@ sudo mv /home/${ssh_username}/nomad.env /etc/nomad.d/nomad.env
 sudo chown -R nomad:nomad /etc/nomad.d
 
 # install consul server cert and key
-sudo mv /home/${ssh_username}/dc1-server-consul.pem /etc/consul.d/.
-sudo mv /home/${ssh_username}/dc1-server-consul-key.pem /etc/consul.d/.
+sudo mv /home/${ssh_username}/dc1-server-consul.pem /etc/consul.d/
+sudo mv /home/${ssh_username}/dc1-server-consul-key.pem /etc/consul.d/
 sudo chown consul:consul /etc/consul.d/dc1-server-consul.pem /etc/consul.d/dc1-server-consul-key.pem
 sudo chmod 640 /etc/consul.d/dc1-server-consul.pem
 sudo chmod 400 /etc/consul.d/dc1-server-consul-key.pem

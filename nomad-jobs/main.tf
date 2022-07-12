@@ -8,6 +8,25 @@ data "nomad_plugin" "nas" {
 }
 
 //!-------------- volumes ------------------------>
+resource "nomad_external_volume" "bitbucket_data" {
+  depends_on   = [data.nomad_plugin.nas]
+  type         = "csi"
+  plugin_id    = "nas"
+  volume_id    = "bitbucket_data"
+  name         = "bitbucket_data"
+  capacity_min = "1G"
+  capacity_max = "5G"
+
+  capability {
+    access_mode     = "single-node-writer"
+    attachment_mode = "file-system"
+  }
+
+  lifecycle {
+    prevent_destroy = false
+  }
+}
+
 resource "nomad_external_volume" "code_server" {
   depends_on   = [data.nomad_plugin.nas]
   type         = "csi"
@@ -332,6 +351,20 @@ resource "nomad_external_volume" "unifi" {
 }
 
 //!-------------- jobs ------------------------>
+resource "nomad_job" "bitbucket" {
+  jobspec    = file("${path.module}/jobs/bitbucket.nomad")
+  depends_on = [nomad_external_volume.bitbucket_data]
+
+  hcl2 {
+    enabled  = true
+    allow_fs = true
+    vars = {
+      "domain"          = var.domain,
+      "vault_cert_role" = var.vault_cert_role,
+    }
+  }
+}
+
 resource "nomad_job" "code_server" {
   jobspec    = file("${path.module}/jobs/code-server.nomad")
   depends_on = [nomad_external_volume.code_server, nomad_job.docker_registry]
@@ -460,6 +493,7 @@ resource "nomad_job" "homebridge" {
     allow_fs = true
     vars = {
       "domain"          = var.domain,
+      "subnet_cidr"     = var.subnet_cidr,
       "vault_cert_role" = var.vault_cert_role,
     }
   }

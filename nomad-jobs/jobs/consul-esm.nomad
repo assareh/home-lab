@@ -10,11 +10,11 @@ job "consul-ext-service-monitor" {
       driver = "exec"
 
       artifact {
-        source      = "https://releases.hashicorp.com/consul-esm/0.5.0/consul-esm_0.5.0_linux_amd64.zip"
+        source      = "https://releases.hashicorp.com/consul-esm/0.6.0/consul-esm_0.6.0_linux_amd64.zip"
         destination = "local/"
 
         options {
-          checksum = "sha256:96dae821bd3d1775048c9dbe8d6112ed645c9b912786c167ba9417f59509059d"
+          checksum = "sha256:161a9df2b69a73e70004aef2908a8fd4cbcd86b3586d892934b3c9e7f6fbea94"
         }
       }
 
@@ -68,7 +68,7 @@ EOF
 
       resources {
         cpu    = 20
-        memory = 10
+        memory = 20
       }
     }
   }

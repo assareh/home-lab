@@ -49,7 +49,7 @@ EOH
 
       resources {
         cpu    = 57
-        memory = 96
+        memory = 90
       }
 
       scaling "cpu" {
