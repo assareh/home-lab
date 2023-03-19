@@ -20,6 +20,7 @@ locals {
     "gitlab-runner",
     "google-dns-updater",
     "homebridge",
+    "icloud",
     "pihole",
     "prometheus",
     "splunk",
